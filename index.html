@@ -3,25 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Clone with Firebase - Dynamic Servers Edition</title>
+    <title>Discord Clone - Full Social & Server Suite Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
     <style>
-        .discord-dark {
-            background-color: #313338;
-            color: #f2f3f5;
-        }
+        .discord-dark { background-color: #313338; color: #f2f3f5; }
         .discord-servers { background-color: #1e1f22; }
         .discord-channels { background-color: #2b2d31; }
         .discord-chat { background-color: #313338; }
         .discord-user-bar { background-color: #232428; }
+        .members-wrap { background-color: #2b2d31; width: 240px; }
         #cropper-container { max-height: 300px; }
         .cropper-view-box, .cropper-face { border-radius: 50%; } 
         .cropper-banner .cropper-view-box, .cropper-banner .cropper-face { border-radius: 0; } 
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden font-sans flex">
+<body class="h-screen w-screen overflow-hidden font-sans flex discord-dark">
 
     <div id="auth-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-[#313338]">
         <div class="bg-[#313338] p-8 rounded-lg shadow-2xl w-[480px] border border-[#232428]">
@@ -56,7 +54,7 @@
     <div id="app-dashboard" class="hidden h-full w-full flex">
         
         <div class="discord-servers w-[72px] flex flex-col items-center py-3 space-y-2 shrink-0 overflow-y-auto">
-            <div onclick="selectServer('home')" class="w-12 h-12 rounded-3xl bg-[#313338] hover:rounded-2xl hover:bg-[#5865F2] flex items-center justify-center cursor-pointer transition-all duration-200 text-white font-bold border-2 border-transparent hover:border-[#5865F2]" title="Direct Messages">
+            <div onclick="selectServer('home')" class="w-12 h-12 rounded-3xl bg-[#313338] hover:rounded-2xl hover:bg-[#5865F2] flex items-center justify-center cursor-pointer transition-all duration-200 text-white font-bold border-2 border-transparent hover:border-[#5865F2]" title="Direct Messages / Home">
                 DC
             </div>
             <div class="w-8 h-[2px] bg-[#35363c] rounded"></div>
@@ -67,34 +65,36 @@
             <div onclick="openCreateServerModal()" class="w-12 h-12 rounded-3xl bg-[#2b2d31] hover:rounded-2xl hover:bg-[#23a55a] flex items-center justify-center cursor-pointer transition-all duration-200 text-gray-300 hover:text-white font-bold text-xl" title="Add a Server">+</div>
         </div>
 
-        <div class="discord-channels w-60 flex flex-col shrink-0">
+        <div class="discord-channels w-60 flex flex-col shrink-0 border-r border-[#1f2023]">
             <div class="h-12 border-b border-[#1f2023] flex items-center justify-between px-4 font-bold text-white shadow-sm">
-                <span id="active-server-name">Home Server</span>
+                <span id="active-server-name">Direct Messages</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
             </div>
             
             <div class="flex-1 overflow-y-auto px-2 py-4 space-y-4">
-                <div>
+                <div id="channels-wrapper">
                     <div class="text-xs font-bold text-gray-400 px-2 uppercase tracking-wider mb-1 flex items-center justify-between">
-                        <span>Text Channels</span>
-                        <svg onclick="openCreateChannelModal()" class="cursor-pointer hover:text-white" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                        <span>Direct Channels</span>
                     </div>
                     <div id="channels-list" class="space-y-0.5">
                         <div class="flex items-center space-x-2 px-2 py-1.5 rounded bg-[#35373c] text-white cursor-pointer">
-                            <span class="text-gray-400 text-lg">#</span>
-                            <span class="font-medium text-sm">general</span>
+                            <span class="text-gray-400 text-lg">@</span>
+                            <span class="font-medium text-sm">friends</span>
                         </div>
                     </div>
                 </div>
                 
-                <div id="server-settings-block" class="hidden border-t border-gray-700 pt-4">
+                <div id="server-settings-block" class="hidden border-t border-gray-700 pt-4 space-y-2">
                     <button onclick="openRolesModal()" class="w-full bg-gray-700 hover:bg-gray-600 text-white text-xs py-2 rounded transition font-bold uppercase tracking-wider">
-                        ⚙️ Roles & Permissions
+                        ⚙️ Roles & Settings
+                    </button>
+                    <button onclick="leaveServer()" class="w-full bg-red-900/50 hover:bg-red-800/60 text-red-200 text-xs py-2 rounded transition font-bold uppercase tracking-wider">
+                        ⚠️ Leave Server
                     </button>
                 </div>
             </div>
 
-            <div class="discord-user-bar h-14 flex items-center justify-between px-2">
+            <div class="discord-user-bar h-14 flex items-center justify-between px-2 shrink-0">
                 <div class="flex items-center space-x-2 cursor-pointer hover:bg-[#35373c] p-1.5 rounded w-[70%]" onclick="openProfileModal()">
                     <img id="nav-user-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=Fallback" class="w-8 h-8 rounded-full bg-[#5865F2] object-cover shrink-0" alt="PFP">
                     <div class="flex flex-col overflow-hidden leading-tight">
@@ -108,22 +108,53 @@
             </div>
         </div>
 
-        <div class="discord-chat flex-1 flex flex-col justify-between relative">
-            <div class="h-12 border-b border-[#1f2023] flex items-center px-4 shadow-sm space-x-2">
-                <span class="text-gray-400 text-lg">#</span>
-                <span id="active-channel-name" class="font-bold text-white text-base tracking-wide">general</span>
-                <span class="text-gray-400 text-sm border-l border-gray-700 pl-3 ml-2">Welcome to the channel!</span>
+        <div class="discord-chat flex-1 flex flex-col justify-between relative overflow-hidden">
+            <div class="h-12 border-b border-[#1f2023] flex items-center px-4 shadow-sm space-x-2 shrink-0">
+                <span class="text-gray-400 text-lg" id="active-channel-prefix">@</span>
+                <span id="active-channel-name" class="font-bold text-white text-base tracking-wide">friends</span>
+                <span class="text-gray-400 text-sm border-l border-gray-700 pl-3 ml-2" id="active-channel-desc">Manage friends list, system logs, direct channels.</span>
             </div>
 
-            <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+            <div id="home-dashboard-panel" class="flex-1 flex flex-col p-6 overflow-y-auto">
+                <div class="flex border-b border-gray-700 space-x-6 mb-6">
+                    <span class="text-white font-bold pb-2 border-b-2 border-[#5865F2]">Friends List</span>
+                    <span class="text-gray-400 font-semibold cursor-pointer hover:text-white" onclick="switchMainTab('add-friend')">Add Friend</span>
+                </div>
 
-            <div class="p-4 pt-0">
-                <form id="message-form" onsubmit="sendMessage(event)" class="bg-[#383a40] rounded-lg p-2.5 flex items-center space-x-3">
-                    <button type="button" class="text-gray-400 hover:text-white bg-[#4e5058] hover:bg-[#6d6f78] p-1 rounded-full"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
-                    <input type="text" id="message-input" placeholder="Message #general" class="flex-1 bg-transparent text-white focus:outline-none placeholder-gray-500 text-sm">
-                    <button type="submit" class="hidden">Send</button>
-                </form>
+                <div id="tab-friends-list" class="space-y-4">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Online — <span id="online-count">0</span></div>
+                    <div id="friends-container" class="space-y-1">
+                        </div>
+                </div>
+
+                <div id="tab-add-friend" class="hidden space-y-4 max-w-lg">
+                    <h3 class="text-white font-bold text-lg">Add Friend</h3>
+                    <p class="text-gray-400 text-sm">You can add a friend with their Firebase User ID.</p>
+                    <div class="bg-[#1e1f22] p-3 rounded-lg flex items-center space-x-3 border border-[#111214]">
+                        <input type="text" id="add-friend-uid-input" placeholder="Enter User ID (e.g., u_8f39a...)" class="flex-1 bg-transparent text-white text-sm focus:outline-none">
+                        <button onclick="submitAddFriend()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-1.5 rounded text-sm font-medium transition">Send Friend Request</button>
+                    </div>
+                    <div id="add-friend-feedback" class="text-xs font-medium"></div>
+                </div>
             </div>
+
+            <div id="server-chat-panel" class="flex-1 flex flex-col hidden justify-between">
+                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+                <div class="p-4 pt-0 shrink-0">
+                    <form id="message-form" onsubmit="sendMessage(event)" class="bg-[#383a40] rounded-lg p-2.5 flex items-center space-x-3">
+                        <button type="button" class="text-gray-400 hover:text-white bg-[#4e5058] hover:bg-[#6d6f78] p-1 rounded-full"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+                        <input type="text" id="message-input" placeholder="Message #general" class="flex-1 bg-transparent text-white focus:outline-none placeholder-gray-500 text-sm">
+                        <button type="submit" class="hidden">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="server-members-sidebar" class="members-wrap h-full flex-col shrink-0 px-4 py-6 space-y-4 overflow-y-auto hidden border-l border-[#1f2023]">
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Online Members</div>
+            <div id="online-members-list" class="space-y-1"></div>
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2 border-t border-gray-700/60">Offline Members</div>
+            <div id="offline-members-list" class="space-y-1"></div>
         </div>
     </div>
 
@@ -156,8 +187,12 @@
                     </div>
                 </div>
                 <div>
+                    <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider">User ID (Share this to be added!)</span>
+                    <input type="text" id="profile-user-id" readonly class="w-full bg-[#1e1f22] text-gray-400 font-mono text-xs p-2 rounded mt-1 border border-[#111214] select-all">
+                </div>
+                <div>
                     <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Image Address Link</span>
-                    <input type="text" id="profile-img-link" readonly class="w-full bg-[#1e1f22] text-gray-400 font-mono text-xs p-2 rounded mt-1 border border-[#111214] select-all" placeholder="Base64 Image Address shows up here upon uploading asset...">
+                    <input type="text" id="profile-img-link" readonly class="w-full bg-[#1e1f22] text-gray-400 font-mono text-xs p-2 rounded mt-1 border border-[#111214] select-all" placeholder="Base64 Image Link displays here upon upload...">
                 </div>
             </div>
 
@@ -168,11 +203,58 @@
         </div>
     </div>
 
+    <div id="visiting-profile-modal" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-xs">
+        <div class="bg-[#313338] rounded-lg shadow-2xl w-[520px] border border-[#232428] overflow-hidden">
+            <div id="v-profile-banner" class="h-28 bg-gray-600 relative bg-cover bg-center flex items-end p-4">
+                <img id="v-profile-pfp" src="" class="w-20 h-20 rounded-full border-4 border-[#313338] bg-[#1e1f22] object-cover translate-y-6 ml-2" alt="Avatar">
+            </div>
+            
+            <div class="p-6 pt-10 space-y-4">
+                <div>
+                    <div class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Display Name</div>
+                    <div id="v-profile-displayname" class="text-white font-bold text-lg">---</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Handle</div>
+                        <div id="v-profile-handle" class="text-gray-300 font-mono text-sm">@---</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">User ID</div>
+                        <div id="v-profile-uid" class="text-gray-400 font-mono text-xs select-all">---</div>
+                    </div>
+                </div>
+                
+                <div id="v-profile-roles-section" class="border-t border-gray-700 pt-3 hidden">
+                    <div class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1.5">Server Roles Management</div>
+                    <div id="v-roles-chips" class="flex flex-wrap gap-1.5 mb-3"></div>
+                    <div class="flex space-x-2">
+                        <select id="v-assign-role-select" class="flex-1 bg-[#1e1f22] text-xs text-white border border-gray-700 rounded p-1.5 focus:outline-none">
+                            </select>
+                        <button onclick="submitAssignRole()" class="bg-[#23a55a] hover:bg-[#1b7e43] text-white text-xs px-3 py-1.5 rounded font-medium transition">Assign Role</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-[#2b2d31] px-6 py-4 flex justify-between items-center">
+                <button id="v-add-friend-btn" onclick="submitAddFriendFromModal()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded text-xs font-medium transition flex items-center space-x-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+                    <span>Add to Friends List</span>
+                </button>
+                <button onclick="closeVisitingProfileModal()" class="text-white hover:bg-gray-700 px-4 py-2 rounded text-sm transition ml-auto">Dismiss</button>
+            </div>
+            
+            <div id="v-footer-action-badge" class="bg-[#1e1f22] px-6 py-2.5 text-[10px] text-gray-400 border-t border-[#232428] flex items-center justify-between">
+                <span>Inspecting user profile details...</span>
+            </div>
+        </div>
+    </div>
+
     <div id="cropper-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/80">
         <div class="bg-[#313338] p-6 rounded-lg w-[500px] border border-[#232428]">
-            <h3 class="text-white font-bold mb-4 text-center">Crop Image</h3>
+            <h3 class="text-white font-bold mb-4 text-center">Crop Image Asset</h3>
             <div id="cropper-container" class="overflow-hidden bg-[#1e1f22] rounded flex justify-center items-center">
-                <img id="cropper-image" src="" class="max-h-[300px]">
+                <img id="cropper-image" src="" class="max-h-[300px]" alt="Cropper source">
             </div>
             <div class="flex justify-between mt-6">
                 <button onclick="cancelCrop()" class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm">Cancel</button>
@@ -241,15 +323,6 @@
                             <span class="text-sm text-gray-200">Administrator</span>
                             <input type="checkbox" id="perm-admin" class="w-5 h-5 rounded accent-[#23a55a]">
                         </div>
-                        
-                        <div class="border-t border-gray-700 pt-4 mt-4">
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Assign Role to User (UID)</span>
-                            <div class="flex space-x-2">
-                                <input type="text" id="role-assignee-uid" class="flex-1 bg-[#1e1f22] border border-gray-700 rounded p-2 text-white text-xs" placeholder="Paste user UID here">
-                                <button onclick="assignRoleToUser()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded text-xs font-medium">Assign</button>
-                            </div>
-                            <div id="role-assignees-display" class="mt-2 text-[10px] text-gray-400 max-h-12 overflow-y-auto"></div>
-                        </div>
                     </div>
                 </div>
 
@@ -266,631 +339,5 @@
         <div class="bg-[#313338] p-6 rounded-lg w-[400px] border border-[#232428]">
             <h3 class="text-white font-bold mb-4 text-sm">Create Role</h3>
             <div>
-                <label class="block text-xs text-gray-400">ROLE NAME</label>
-                <input type="text" id="new-role-name-input" class="w-full bg-[#1e1f22] border border-gray-700 rounded p-2 text-white text-sm mt-1 focus:outline-none focus:border-indigo-500">
-            </div>
-            <div class="flex justify-end space-x-3 mt-6">
-                <button onclick="closeCreateRoleModal()" class="text-gray-400 text-sm hover:underline">Cancel</button>
-                <button onclick="submitCreateRole()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded text-sm">Create</button>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, setDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, where } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAMAiYmLy2k5feaWbUHE7n5TUNlZGAr6nk",
-            authDomain: "speechcentor.firebaseapp.com",
-            projectId: "speechcentor",
-            storageBucket: "speechcentor.firebasestorage.app",
-            messagingSenderId: "804696408540",
-            appId: "1:804696408540:web:855cae2217b55dca0a4f19",
-            measurementId: "G-HQ93JH0QCJ"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        window.auth = auth;
-        window.db = db;
-        window.doc = doc;
-        window.getDoc = getDoc;
-        window.setDoc = setDoc;
-        window.updateDoc = updateDoc;
-        window.deleteDoc = deleteDoc;
-        window.arrayUnion = arrayUnion;
-        window.arrayRemove = arrayRemove;
-        window.getDocs = getDocs;
-        window.collection = collection;
-        window.addDoc = addDoc;
-        window.serverTimestamp = serverTimestamp;
-        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-        window.signOut = signOut;
-        window.where = where;
-        window.query = query;
-        window.orderBy = orderBy;
-        window.onSnapshot = onSnapshot;
-
-        onAuthStateChanged(auth, async (user) => {
-            const authModal = document.getElementById('auth-modal');
-            const appDashboard = document.getElementById('app-dashboard');
-
-            if (user) {
-                authModal.classList.add('hidden');
-                appDashboard.classList.remove('hidden');
-                await fetchProfileData(user.uid);
-                startListeningServers(user.uid);
-                loadMessages('home', 'general'); 
-            } else {
-                authModal.classList.remove('hidden');
-                appDashboard.classList.add('hidden');
-            }
-        });
-
-        // Pull active profile data
-        async function fetchProfileData(uid) {
-            try {
-                const userDoc = await getDoc(doc(db, "users", uid));
-                if (userDoc.exists()) {
-                    const data = userDoc.data();
-                    if (data.pfp) {
-                        document.getElementById('nav-user-img').src = data.pfp;
-                        document.getElementById('profile-pfp-preview').src = data.pfp;
-                    }
-                    if (data.banner) {
-                        document.getElementById('profile-banner-preview').style.backgroundImage = `url('${data.banner}')`;
-                    }
-                    document.getElementById('nav-user-displayname').innerText = data.displayName || "Discord User";
-                    document.getElementById('nav-user-handle').innerText = "@" + (data.handle || "user");
-                } else {
-                    await setDoc(doc(db, "users", uid), {
-                        pfp: "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid,
-                        banner: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=800",
-                        displayName: "Discord User",
-                        handle: "user_" + uid.substring(0,4)
-                    });
-                    document.getElementById('nav-user-img').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
-                    document.getElementById('profile-pfp-preview').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
-                    document.getElementById('nav-user-displayname').innerText = "Discord User";
-                    document.getElementById('nav-user-handle').innerText = "@user_" + uid.substring(0,4);
-                }
-            } catch(e) {
-                console.log("Error obtaining user account details", e);
-            }
-        }
-        window.fetchProfileData = fetchProfileData;
-
-        // Listen to Servers where the current user is a member/owner
-        function startListeningServers(uid) {
-            const serversRef = collection(db, "servers");
-            // Check if membership array contains the uid
-            const q = query(serversRef, where("members", "array-contains", uid));
-            
-            onSnapshot(q, (snapshot) => {
-                const serversContainer = document.getElementById('servers-list-container');
-                serversContainer.innerHTML = '';
-                snapshot.forEach((docSnap) => {
-                    const srv = docSnap.data();
-                    const srvDiv = document.createElement('div');
-                    srvDiv.className = "w-12 h-12 rounded-3xl bg-[#313338] hover:rounded-2xl hover:bg-[#5865F2] flex items-center justify-center cursor-pointer transition-all duration-200 text-white font-bold border-2 border-transparent hover:border-[#5865F2] relative group";
-                    srvDiv.title = srv.name;
-                    srvDiv.onclick = () => selectServer(docSnap.id, srv.name);
-                    srvDiv.innerHTML = srv.name.substring(0,2).toUpperCase();
-                    serversContainer.appendChild(srvDiv);
-                });
-            });
-        }
-
-        // Live Chat stream listener
-        function loadMessages(serverId, channelName) {
-            const messagesRef = collection(db, "servers", serverId || "home", "channels", channelName || "general", "messages");
-            const q = query(messagesRef, orderBy("createdAt", "asc"));
-            
-            onSnapshot(q, (snapshot) => {
-                const messagesContainer = document.getElementById('messages-container');
-                messagesContainer.innerHTML = ''; 
-                snapshot.forEach((docSnap) => {
-                    const msg = docSnap.data();
-                    const msgDiv = document.createElement('div');
-                    msgDiv.className = "flex space-x-4 group hover:bg-[#2b2d31] p-1 rounded transition";
-                    
-                    let timeString = "Just now";
-                    if (msg.createdAt) {
-                        const date = msg.createdAt.toDate();
-                        timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    }
-
-                    msgDiv.innerHTML = `
-                        <img src="${msg.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback'}" class="w-10 h-10 rounded-full bg-[#5865F2] object-cover shrink-0">
-                        <div class="flex flex-col w-full overflow-hidden">
-                            <div class="flex items-baseline space-x-2">
-                                <span class="font-semibold text-white text-sm">${msg.authorName || 'Anonymous'}</span>
-                                <span class="text-xs text-[#b5bac1] font-mono tracking-wide select-all">@${msg.authorHandle || 'user'}</span>
-                                <span class="text-[10px] text-gray-400">${timeString}</span>
-                            </div>
-                            <p class="text-[#dbdee1] text-sm break-words mt-0.5">${escapeHTML(msg.text)}</p>
-                        </div>
-                    `;
-                    messagesContainer.appendChild(msgDiv);
-                });
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            });
-        }
-        window.loadMessages = loadMessages;
-
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
-        }
-    </script>
-
-    <script>
-        let isSignUp = false;
-        let cropper = null;
-        let activeCropTarget = null; 
-        
-        let currentServerId = 'home';
-        let currentChannelName = 'general';
-        let activeRoleData = null;
-
-        function toggleAuthMode() {
-            isSignUp = !isSignUp;
-            const title = document.getElementById('auth-title');
-            const submitBtn = document.getElementById('auth-submit-btn');
-            const switchText = document.getElementById('auth-switch-text');
-            const switchBtn = document.getElementById('auth-switch-btn');
-            const errDiv = document.getElementById('auth-error');
-            errDiv.classList.add('hidden');
-
-            if (isSignUp) {
-                title.innerText = "Create an account";
-                submitBtn.innerText = "Register";
-                switchText.innerText = "Already have an account?";
-                switchBtn.innerText = "Log In";
-            } else {
-                title.innerText = "Welcome back!";
-                submitBtn.innerText = "Log In";
-                switchText.innerText = "Need an account?";
-                switchBtn.innerText = "Register";
-            }
-        }
-
-        async function handleAuth(e) {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            const errDiv = document.getElementById('auth-error');
-            errDiv.classList.add('hidden');
-
-            try {
-                if (isSignUp) {
-                    await createUserWithEmailAndPassword(window.auth, email, password);
-                } else {
-                    await signInWithEmailAndPassword(window.auth, email, password);
-                }
-            } catch (error) {
-                errDiv.innerText = error.message.replace("Firebase: ", "");
-                errDiv.classList.remove('hidden');
-            }
-        }
-
-        async function logoutUser() {
-            try {
-                await signOut(window.auth);
-            } catch (error) {
-                console.error("Signout error:", error);
-            }
-        }
-
-        // Submitting Messages Engine
-        async function sendMessage(e) {
-            e.preventDefault();
-            const inputVal = document.getElementById('message-input').value.trim();
-            if (!inputVal || !window.auth.currentUser) return;
-
-            try {
-                const userPfp = document.getElementById('nav-user-img').src;
-                const userDisplayName = document.getElementById('nav-user-displayname').innerText;
-                const userHandle = document.getElementById('nav-user-handle').innerText.replace('@','');
-
-                // Optional permission check or simple validation logic 
-                if (currentServerId !== 'home') {
-                    const sRef = window.doc(window.db, "servers", currentServerId);
-                    const sSnap = await window.getDoc(sRef);
-                    if(sSnap.exists()) {
-                        const srvPerms = sSnap.data().rolePermissions || {};
-                        const uUid = window.auth.currentUser.uid;
-                        let canSend = true;
-                        
-                        if(srvPerms['manage_messages'] && srvPerms['manage_messages'].includes(uUid)) {
-                            // Validation passed
-                        }
-                    }
-                }
-
-                await addDoc(window.collection(window.db, "servers", currentServerId, "channels", currentChannelName, "messages"), {
-                    text: inputVal,
-                    authorName: userDisplayName,
-                    authorHandle: userHandle,
-                    uid: window.auth.currentUser.uid,
-                    pfp: userPfp,
-                    createdAt: window.serverTimestamp()
-                });
-                document.getElementById('message-input').value = ''; 
-            } catch (error) {
-                console.error("Error creating chat message: ", error);
-            }
-        }
-
-        // ================= SERVERS / CHANNELS DIRECTORY =================
-        
-        async function selectServer(serverId, serverName = "Home Server") {
-            currentServerId = serverId;
-            currentChannelName = "general";
-            document.getElementById('active-server-name').innerText = serverName;
-            document.getElementById('active-channel-name').innerText = "general";
-            document.getElementById('message-input').placeholder = "Message #" + currentChannelName;
-
-            const channelsList = document.getElementById('channels-list');
-            channelsList.innerHTML = '';
-
-            const settingsBlock = document.getElementById('server-settings-block');
-            if (serverId !== 'home') {
-                settingsBlock.classList.remove('hidden');
-                const chanRef = window.collection(window.db, "servers", serverId, "channels");
-                const chSnap = await window.getDocs(chanRef);
-                chSnap.forEach((c) => {
-                    appendChannelNode(c.id);
-                });
-                if(chSnap.empty) {
-                    const genRef = window.doc(window.db, "servers", serverId, "channels", "general");
-                    await window.setDoc(genRef, { createdAt: window.serverTimestamp() });
-                    appendChannelNode("general");
-                }
-            } else {
-                settingsBlock.classList.add('hidden');
-                appendChannelNode("general");
-            }
-
-            window.loadMessages(currentServerId, currentChannelName);
-        }
-
-        function appendChannelNode(cName) {
-            const channelsList = document.getElementById('channels-list');
-            const cDiv = document.createElement('div');
-            cDiv.className = `flex items-center space-x-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${cName === currentChannelName ? 'bg-[#35373c] text-white' : 'hover:bg-[#35373c]/60 text-gray-400 hover:text-gray-200'}`;
-            cDiv.onclick = () => selectChannel(cName);
-            cDiv.innerHTML = `<span class="text-gray-400 text-lg">#</span><span class="font-medium text-sm">${cName}</span>`;
-            channelsList.appendChild(cDiv);
-        }
-
-        function selectChannel(chanName) {
-            currentChannelName = chanName;
-            document.getElementById('active-channel-name').innerText = chanName;
-            document.getElementById('message-input').placeholder = "Message #" + chanName;
-            window.loadMessages(currentServerId, currentChannelName);
-        }
-
-        function openCreateServerModal() {
-            document.getElementById('create-server-modal').classList.remove('hidden');
-        }
-
-        function closeCreateServerModal() {
-            document.getElementById('create-server-modal').classList.add('hidden');
-        }
-
-        async function submitCreateServer() {
-            const sName = document.getElementById('new-server-name').value.trim();
-            if(!sName) return;
-            
-            const currentUid = window.auth.currentUser.uid;
-            
-            // Save server with owner ID and members list initialized with creator
-            const newServerRef = await window.addDoc(window.collection(window.db, "servers"), {
-                name: sName,
-                owner: currentUid,
-                members: [currentUid],
-                createdAt: window.serverTimestamp(),
-                roles: [{ id: "owner", name: "Server Owner", permissions: ["kick", "manage_msgs", "admin"], assignedUsers: [currentUid] }]
-            });
-            
-            const chRef = window.doc(window.db, "servers", newServerRef.id, "channels", "general");
-            await window.setDoc(chRef, { type: "text" });
-
-            document.getElementById('new-server-name').value = '';
-            closeCreateServerModal();
-            selectServer(newServerRef.id, sName);
-        }
-
-        function openCreateChannelModal() {
-            if(currentServerId === 'home') return alert('Direct messages do not support adding channels.');
-            document.getElementById('create-channel-modal').classList.remove('hidden');
-        }
-
-        function closeCreateChannelModal() {
-            document.getElementById('create-channel-modal').classList.add('hidden');
-        }
-
-        async function submitCreateChannel() {
-            const cName = document.getElementById('new-channel-name').value.trim().toLowerCase();
-            if(!cName) return;
-
-            const chRef = window.doc(window.db, "servers", currentServerId, "channels", cName);
-            await window.setDoc(chRef, { type: "text" });
-
-            document.getElementById('new-channel-name').value = '';
-            closeCreateChannelModal();
-            selectServer(currentServerId, document.getElementById('active-server-name').innerText); 
-        }
-
-        // ================= PROFILE MANAGING DOM =================
-
-        function openProfileModal() {
-            const user = window.auth.currentUser;
-            if (!user) return;
-            
-            document.getElementById('profile-displayname-input').value = document.getElementById('nav-user-displayname').innerText;
-            document.getElementById('profile-handle-input').value = document.getElementById('nav-user-handle').innerText.replace('@', '');
-            document.getElementById('profile-img-link').value = "";
-            
-            document.getElementById('profile-modal').classList.remove('hidden');
-        }
-
-        function closeProfileModal() {
-            document.getElementById('profile-modal').classList.add('hidden');
-        }
-
-        async function saveProfileDetails() {
-            const user = window.auth.currentUser;
-            const newDisplayName = document.getElementById('profile-displayname-input').value.trim();
-            const newHandle = document.getElementById('profile-handle-input').value.trim().toLowerCase().replace('@','');
-
-            if(!newDisplayName || !newHandle) return alert('Display name and Handle can not be empty.');
-
-            await window.updateDoc(window.doc(window.db, "users", user.uid), {
-                displayName: newDisplayName,
-                handle: newHandle
-            });
-
-            document.getElementById('nav-user-displayname').innerText = newDisplayName;
-            document.getElementById('nav-user-handle').innerText = "@" + newHandle;
-            closeProfileModal();
-            alert('Profile configuration successfully updated.');
-        }
-
-        // Processing Image uploads, preparing cropping box
-        function prepareCrop(event, targetType) {
-            const file = event.target.files[0];
-            if (!file) return;
-            activeCropTarget = targetType;
-
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const cropperImage = document.getElementById('cropper-image');
-                cropperImage.src = e.target.result;
-                
-                const container = document.getElementById('cropper-container');
-                if (targetType === 'pfp') {
-                    container.className = "cropper-pfp max-h-[300px] overflow-hidden";
-                } else {
-                    container.className = "cropper-banner max-h-[300px] overflow-hidden";
-                }
-
-                document.getElementById('cropper-modal').classList.remove('hidden');
-
-                if (cropper) cropper.destroy();
-                cropper = new Cropper(cropperImage, {
-                    aspectRatio: targetType === 'pfp' ? 1 : 16/9,
-                    viewMode: 1,
-                });
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function cancelCrop() {
-            document.getElementById('cropper-modal').classList.add('hidden');
-            if (cropper) cropper.destroy();
-        }
-
-        async function performCrop() {
-            if (!cropper) return;
-            const user = window.auth.currentUser;
-            if (!user) return;
-
-            const croppedCanvas = cropper.getCroppedCanvas({
-                width: activeCropTarget === 'pfp' ? 200 : 800,
-                height: activeCropTarget === 'pfp' ? 200 : 450,
-            });
-            
-            const dataURL = croppedCanvas.toDataURL(); 
-
-            try {
-                const userRef = window.doc(window.db, "users", user.uid);
-                if (activeCropTarget === 'pfp') {
-                    await window.setDoc(userRef, { pfp: dataURL }, { merge: true });
-                    document.getElementById('nav-user-img').src = dataURL;
-                    document.getElementById('profile-pfp-preview').src = dataURL;
-                    document.getElementById('profile-img-link').value = dataURL;
-                } else {
-                    await window.setDoc(userRef, { banner: dataURL }, { merge: true });
-                    document.getElementById('profile-banner-preview').style.backgroundImage = `url('${dataURL}')`;
-                    document.getElementById('profile-img-link').value = dataURL;
-                }
-                
-                alert("Profile image saved & generated address link created!");
-                document.getElementById('cropper-modal').classList.add('hidden');
-                cropper.destroy();
-            } catch(e) {
-                console.log("Error updating user assets", e);
-            }
-        }
-
-        // ================= SERVER ROLES & PERMISSIONS ENGINE =================
-
-        async function openRolesModal() {
-            if(currentServerId === 'home') return;
-            
-            const sRef = window.doc(window.db, "servers", currentServerId);
-            const sSnap = await window.getDoc(sRef);
-            if(sSnap.exists()){
-                const srvData = sSnap.data();
-                const rolesArr = srvData.roles || [];
-                
-                const rolesList = document.getElementById('server-roles-list');
-                rolesList.innerHTML = '';
-                
-                rolesArr.forEach((role, idx) => {
-                    const rBtn = document.createElement('button');
-                    rBtn.className = "w-full text-left p-2.5 rounded bg-[#1e1f22] text-gray-300 hover:bg-[#35373c] hover:text-white transition text-xs font-medium";
-                    rBtn.innerText = role.name;
-                    rBtn.onclick = () => selectRoleToEdit(role, idx);
-                    rolesList.appendChild(rBtn);
-                });
-            }
-
-            document.getElementById('roles-modal').classList.remove('hidden');
-        }
-
-        function closeRolesModal() {
-            document.getElementById('roles-modal').classList.add('hidden');
-            document.getElementById('permissions-toggles').classList.add('hidden');
-            document.getElementById('roles-editor-title').innerText = "Select a role to configure";
-            document.getElementById('save-role-btn').classList.add('hidden');
-            document.getElementById('delete-role-btn').classList.add('hidden');
-            activeRoleData = null;
-        }
-
-        function selectRoleToEdit(roleObj, arrayIndex) {
-            activeRoleData = { ...roleObj, index: arrayIndex };
-            document.getElementById('roles-editor-title').innerText = "Edit: " + roleObj.name;
-            
-            document.getElementById('perm-kick').checked = roleObj.permissions.includes('kick');
-            document.getElementById('perm-manage-msgs').checked = roleObj.permissions.includes('manage_msgs');
-            document.getElementById('perm-admin').checked = roleObj.permissions.includes('admin');
-
-            const assignees = roleObj.assignedUsers || [];
-            document.getElementById('role-assignees-display').innerText = assignees.length ? "Assigned Users (Uids): " + assignees.join(', ') : "No users assigned.";
-
-            document.getElementById('permissions-toggles').classList.remove('hidden');
-            document.getElementById('save-role-btn').classList.remove('hidden');
-            
-            if(roleObj.id !== 'owner') {
-                document.getElementById('delete-role-btn').classList.remove('hidden');
-            } else {
-                document.getElementById('delete-role-btn').classList.add('hidden');
-            }
-        }
-
-        function openCreateRoleRole() {
-            document.getElementById('create-role-modal').classList.remove('hidden');
-        }
-
-        function closeCreateRoleModal() {
-            document.getElementById('create-role-modal').classList.add('hidden');
-        }
-
-        async function submitCreateRole() {
-            const roleName = document.getElementById('new-role-name-input').value.trim();
-            if(!roleName) return;
-
-            const sRef = window.doc(window.db, "servers", currentServerId);
-            const sSnap = await window.getDoc(sRef);
-            const srvData = sSnap.data();
-            const rolesArr = srvData.roles || [];
-            
-            const newRole = {
-                id: "role_" + Math.random().toString(36).substr(2, 4),
-                name: roleName,
-                permissions: []
-            };
-            rolesArr.push(newRole);
-
-            await window.updateDoc(sRef, { roles: rolesArr });
-            document.getElementById('new-role-name-input').value = '';
-            closeCreateRoleModal();
-            closeRolesModal();
-            openRolesModal();
-        }
-
-        async function saveRolePermissions() {
-            if(!activeRoleData) return;
-
-            const newPerms = [];
-            if(document.getElementById('perm-kick').checked) newPerms.push('kick');
-            if(document.getElementById('perm-manage-msgs').checked) newPerms.push('manage_msgs');
-            if(document.getElementById('perm-admin').checked) newPerms.push('admin');
-
-            const sRef = window.doc(window.db, "servers", currentServerId);
-            const sSnap = await window.getDoc(sRef);
-            const srvData = sSnap.data();
-            const rolesArr = srvData.roles || [];
-
-            rolesArr[activeRoleData.index].permissions = newPerms;
-            const rolePermMap = srvData.rolePermissions || {};
-            newPerms.forEach(p => {
-                if(!rolePermMap[p]) rolePermMap[p] = [];
-            });
-
-            await window.updateDoc(sRef, { 
-                roles: rolesArr,
-                rolePermissions: rolePermMap
-            });
-
-            alert('Role & permission assignments stored safely.');
-            closeRolesModal();
-        }
-
-        async function deleteActiveRole() {
-            if(!activeRoleData || activeRoleData.id === 'owner') return;
-            
-            const sRef = window.doc(window.db, "servers", currentServerId);
-            const sSnap = await window.getDoc(sRef);
-            const srvData = sSnap.data();
-            let rolesArr = srvData.roles || [];
-
-            rolesArr = rolesArr.filter((_, idx) => idx !== activeRoleData.index);
-
-            await window.updateDoc(sRef, { roles: rolesArr });
-            closeRolesModal();
-        }
-
-        async function assignRoleToUser() {
-            const uId = document.getElementById('role-assignee-uid').value.trim();
-            if(!uId || !activeRoleData) return;
-
-            const sRef = window.doc(window.db, "servers", currentServerId);
-            const sSnap = await window.getDoc(sRef);
-            const srvData = sSnap.data();
-            const rolesArr = srvData.roles || [];
-
-            if(!rolesArr[activeRoleData.index].assignedUsers) {
-                rolesArr[activeRoleData.index].assignedUsers = [];
-            }
-
-            rolesArr[activeRoleData.index].assignedUsers.push(uId);
-            
-            const rPerms = rolesArr[activeRoleData.index].permissions;
-            const rolePermMap = srvData.rolePermissions || {};
-            rPerms.forEach(perm => {
-                if(!rolePermMap[perm]) rolePermMap[perm] = [];
-                if(!rolePermMap[perm].includes(uId)) {
-                    rolePermMap[perm].push(uId);
-                }
-            });
-
-            await window.updateDoc(sRef, { 
-                roles: rolesArr,
-                rolePermissions: rolePermMap
-            });
-
-            document.getElementById('role-assignee-uid').value = '';
-            alert('User UID attached to selected role correctly.');
-            closeRolesModal();
-        }
-    </script>
-</body>
-</html>
+                <label class="block text-xs text-gray-400 uppercase tracking-wider">Role Name</label>
+                <input type="text"
