@@ -1,2332 +1,316 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SpeechCentor - Unlimited Custom Themes & Nitro Free</title>
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Lucide Icons CDN -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=gg+sans:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- Cropper.js for Image Cropping -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-
-  <style>
-    body {
-      font-family: 'gg sans', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    
-    /* Dynamic Theme Variables */
-    :root {
-      --sidebar-bg: #2b2d31;
-      --chat-bg: #313338;
-      --server-bg: #1e1f22;
-      --accent-color: #5865f2;
-      --text-color: #dbdee1;
-      --header-bg: #1f2023;
-      --card-bg: #111214;
-    }
-
-    /* Scrollbar Styling */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.5);
-    }
-    
-    /* Custom hidden scroll class */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-
-    /* Cropper adjustments */
-    .cropper-view-box,
-    .cropper-face {
-      border-radius: 4px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Clone with Firebase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .discord-dark {
+            background-color: #313338;
+            color: #f2f3f5;
+        }
+        .discord-servers { background-color: #1e1f22; }
+        .discord-channels { background-color: #2b2d31; }
+        .discord-chat { background-color: #313338; }
+        .discord-user-bar { background-color: #232428; }
+    </style>
 </head>
-<body class="h-full overflow-hidden select-none" style="background-color: var(--chat-bg); color: var(--text-color);">
+<body class="h-screen w-screen overflow-hidden font-sans">
 
-  <!-- Root App Layout -->
-  <div class="flex h-screen w-screen overflow-hidden">
-    
-    <!-- Toast Notification Banner -->
-    <div id="toast-banner" class="hidden absolute top-5 right-5 z-50 flex items-center gap-3 bg-[#111214] border-l-4 border-pink-500 text-white px-5 py-4 rounded shadow-2xl transition-all duration-300 transform translate-y-[-20px] opacity-0">
-      <i data-lucide="zap" class="text-pink-500 w-5 h-5 flex-shrink-0 animate-bounce"></i>
-      <span id="toast-text" class="font-semibold text-sm">Welcome to SpeechCentor!</span>
-      <button onclick="hideToast()" class="text-gray-400 hover:text-white ml-2">
-        <i data-lucide="x" class="w-4 h-4"></i>
-      </button>
-    </div>
-
-    <!-- 1. LEFTMOST ELEMENT: Server Navigation Sidebar -->
-    <div id="server-sidebar" class="w-[72px] flex flex-col items-center py-3 gap-2 flex-shrink-0 border-r border-black/10" style="background-color: var(--server-bg);">
-      <!-- Direct Home Messages -->
-      <button onclick="switchServer('home')" id="home-button" class="relative group w-12 h-12 rounded-3xl flex items-center justify-center transition-all duration-300 text-gray-400 hover:text-white" style="background-color: var(--sidebar-bg);">
-        <div id="home-indicator" class="absolute left-0 w-1 bg-white rounded-r transition-all duration-300 h-0"></div>
-        <i data-lucide="tv" class="w-6 h-6"></i>
-        <div class="absolute left-[80px] scale-0 group-hover:scale-100 bg-black text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-xl transition-all duration-150 origin-left z-50 whitespace-nowrap">
-          SpeechCentor Matrix
-        </div>
-      </button>
-
-      <div class="w-8 h-[2px] bg-zinc-700/40 rounded my-1"></div>
-
-      <!-- Dynamic Server List Container -->
-      <div id="servers-container" class="flex-1 w-full overflow-y-auto no-scrollbar flex flex-col items-center gap-2"></div>
-
-      <!-- Create Server Action -->
-      <button onclick="openModal('create-server-modal')" class="group w-12 h-12 rounded-3xl flex items-center justify-center transition-all duration-300" style="background-color: var(--sidebar-bg); color: var(--accent-color);">
-        <i data-lucide="plus" class="w-6 h-6 hover:scale-110"></i>
-        <div class="absolute left-[80px] scale-0 group-hover:scale-100 bg-black text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-xl transition-all duration-150 origin-left z-50 whitespace-nowrap">
-          Create Server
-        </div>
-      </button>
-
-      <!-- Customize Themes Trigger -->
-      <button onclick="openModal('theme-modal')" class="group w-12 h-12 rounded-3xl bg-pink-600/20 hover:bg-pink-600 hover:rounded-2xl flex items-center justify-center text-pink-400 hover:text-white transition-all duration-300 mt-auto">
-        <i data-lucide="palette" class="w-5 h-5"></i>
-        <div class="absolute left-[80px] scale-0 group-hover:scale-100 bg-black text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-xl transition-all duration-150 origin-left z-50 whitespace-nowrap">
-          Premium Themes Menu
-        </div>
-      </button>
-    </div>
-
-    <!-- 2. SECOND ELEMENT: Channels & Direct Messages Sidebar -->
-    <div id="channels-sidebar" class="w-60 flex flex-col flex-shrink-0 border-r border-black/10" style="background-color: var(--sidebar-bg);">
-      <!-- Channels Header -->
-      <div class="h-12 px-4 flex items-center justify-between font-bold text-white shadow-sm border-b border-black/15 select-none">
-        <span id="active-server-name" class="truncate">SpeechCentor</span>
-        <div class="text-[10px] bg-gradient-to-r from-pink-500 to-purple-500 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider flex items-center gap-0.5">
-          <i data-lucide="gem" class="w-3 h-3"></i> Nitro
-        </div>
-      </div>
-
-      <!-- Channels & Members Scroll Space -->
-      <div class="flex-1 overflow-y-auto px-2 py-3 space-y-4">
-        <!-- Boosting panel for Servers -->
-        <div id="server-boosting-panel" class="hidden bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded p-2 mb-3">
-          <div class="flex items-center justify-between text-xs font-bold text-pink-400 mb-1">
-            <span class="flex items-center gap-1"><i data-lucide="gem" class="w-3.5 h-3.5"></i> Boost Tier 3</span>
-            <span id="boosts-count-badge">12 Boosts</span>
-          </div>
-          <button onclick="boostActiveServer()" class="w-full mt-1 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white text-[11px] font-bold py-1 px-2 rounded transition flex items-center justify-center gap-1">
-            🚀 Boost This Server (Free)
-          </button>
-        </div>
-
-        <!-- Text channels block -->
-        <div id="text-channels-block" class="space-y-0.5">
-          <div class="flex items-center justify-between text-xs font-semibold text-gray-400 uppercase px-2 mb-1 select-none">
-            <span id="channels-label-text">Direct Channels</span>
-            <button onclick="triggerAddChannel('text')" class="hover:text-white" id="create-channel-btn">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-            </button>
-          </div>
-          <div id="channels-list-container" class="space-y-0.5"></div>
-        </div>
-
-        <!-- Voice channels block -->
-        <div id="voice-channels-block" class="space-y-0.5 pt-2 hidden">
-          <div class="flex items-center justify-between text-xs font-semibold text-gray-400 uppercase px-2 mb-1 select-none">
-            <span>Voice Channels</span>
-            <button onclick="triggerAddChannel('voice')" class="hover:text-white">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-            </button>
-          </div>
-          <div id="voice-list-container" class="space-y-0.5"></div>
-        </div>
-      </div>
-
-      <!-- Soundboard Drawer -->
-      <div class="p-2 border-t border-black/10">
-        <button onclick="toggleSoundboard()" class="w-full py-2 px-3 bg-gradient-to-r from-purple-600/30 to-pink-600/30 hover:from-purple-600 hover:to-pink-600 text-white rounded text-xs font-bold transition flex items-center justify-center gap-2">
-          <i data-lucide="music" class="w-4 h-4"></i> Soundboard (Nitro Free)
-        </button>
-        <div id="soundboard-drawer" class="hidden mt-2 bg-black/40 rounded p-2 grid grid-cols-2 gap-1 text-[10px] font-bold">
-          <button onclick="playSoundEffect('airhorn')" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-center truncate text-gray-300">📯 Airhorn</button>
-          <button onclick="playSoundEffect('chime')" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-center truncate text-gray-300">🔔 Chime</button>
-          <button onclick="playSoundEffect('laser')" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-center truncate text-gray-300">🔫 Laser</button>
-          <button onclick="playSoundEffect('charge')" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-center truncate text-gray-300">🔋 Charge</button>
-          <button onclick="playSoundEffect('explosion')" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-center truncate text-gray-300">💥 Boom</button>
-          <button onclick="playSoundEffect('synth-beep')" class="p-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-center truncate text-gray-300">👾 Beep</button>
-        </div>
-      </div>
-
-      <!-- Voice active connection panel -->
-      <div id="voice-connection-panel" class="hidden bg-black/30 px-3 py-2.5 border-t border-black/20 flex flex-col gap-1">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-            <div class="text-xs font-bold text-emerald-400">96kHz Ultra Audio</div>
-          </div>
-          <button onclick="disconnectVoice()" class="text-xs text-rose-500 hover:underline">Disconnect</button>
-        </div>
-        <div id="voice-channel-name-active" class="text-xs text-gray-400 truncate">General Lounge</div>
-      </div>
-
-      <!-- Bottom User profile panel -->
-      <div id="bottom-user-panel" class="h-[52px] px-2 flex items-center justify-between gap-1 select-none border-t border-black/15">
-        <button onclick="openModal('profile-modal')" class="flex items-center gap-2 p-1 rounded hover:bg-black/20 text-left overflow-hidden flex-1 group" title="Click to copy your unique Tag ID">
-          <div class="relative flex-shrink-0">
-            <img id="user-avatar-img" src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150" alt="avatar" class="w-8 h-8 rounded-full object-cover">
-            <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-zinc-800"></div>
-          </div>
-          <div class="overflow-hidden">
-            <div class="text-xs font-bold text-white truncate group-hover:text-pink-400 flex items-center gap-1">
-              <span id="user-display-name">Setting User...</span>
-              <span id="user-badges-container" class="flex items-center gap-0.5"></span>
-            </div>
-            <div id="user-custom-status" class="text-[10px] text-gray-400 truncate">Online</div>
-          </div>
-        </button>
-
-        <!-- Quick state controls -->
-        <div class="flex items-center text-gray-400">
-          <button onclick="toggleMute()" id="mute-toggle" class="p-1.5 rounded hover:bg-black/25">
-            <i data-lucide="mic" class="w-4 h-4"></i>
-          </button>
-          <button onclick="toggleDeafen()" id="deafen-toggle" class="p-1.5 rounded hover:bg-black/25">
-            <i data-lucide="headphones" class="w-4 h-4"></i>
-          </button>
-          <button onclick="openModal('profile-modal')" class="p-1.5 rounded hover:bg-black/25">
-            <i data-lucide="settings" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. THIRD ELEMENT: Main Viewport (Messages Feed & Input) -->
-    <div class="flex-1 flex flex-col min-w-0" style="background-color: var(--chat-bg);">
-      <!-- Chat Header -->
-      <div class="h-12 px-4 flex items-center justify-between flex-shrink-0 shadow-sm border-b border-black/15" style="background-color: var(--header-bg);">
-        <div class="flex items-center gap-2 overflow-hidden">
-          <i data-lucide="hash" id="header-type-icon" class="w-5 h-5 text-gray-400"></i>
-          <span id="header-channel-title" class="font-bold text-white truncate">Select or Create a Channel</span>
-          <div id="header-divider" class="hidden w-[1px] h-4 bg-zinc-600 mx-2 flex-shrink-0"></div>
-          <span id="header-channel-topic" class="text-xs text-gray-400 truncate font-medium"></span>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <button onclick="openModal('theme-modal')" class="flex items-center gap-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-extrabold px-3 py-1.5 rounded-full shadow transition">
-            <i data-lucide="palette" class="w-3.5 h-3.5"></i> Customize Themes
-          </button>
-          <button onclick="toggleMembersList()" id="toggle-members-btn" class="text-white hover:text-pink-400 p-1">
-            <i data-lucide="users" class="w-5 h-5"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Feed Container & Input Space -->
-      <div class="flex-1 flex min-h-0">
-        <!-- Messages Area -->
-        <div class="flex-1 flex flex-col justify-between min-w-0 relative">
-          
-          <!-- Home Friends Dashboard Container -->
-          <div id="home-dashboard-welcome" class="flex-1 flex flex-col bg-[#313338] overflow-y-auto">
-            <!-- Top Dashboard Bar -->
-            <div class="h-12 border-b border-black/15 px-6 flex items-center gap-6 text-sm font-semibold select-none flex-shrink-0 bg-[#2b2d31]">
-              <span class="text-white flex items-center gap-2"><i data-lucide="users" class="w-5 h-5 text-gray-400"></i> Friends</span>
-              <div class="w-[1px] h-4 bg-zinc-600"></div>
-              <button onclick="switchFriendsTab('online')" id="tab-friend-online" class="text-white hover:bg-white/10 px-3 py-1 rounded transition">Online</button>
-              <button onclick="switchFriendsTab('all')" id="tab-friend-all" class="text-gray-400 hover:text-white px-3 py-1 rounded transition">All Users</button>
-              <button onclick="switchFriendsTab('add')" id="tab-friend-add" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded transition">Add Friend</button>
+    <div id="auth-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-[#313338]">
+        <div class="bg-[#313338] p-8 rounded-lg shadow-2xl w-[480px] border border-[#232428]">
+            <div class="text-center mb-6">
+                <h2 id="auth-title" class="text-2xl font-bold text-white mb-2">Welcome back!</h2>
+                <p class="text-gray-400 text-sm">We're so excited to see you again!</p>
             </div>
 
-            <!-- Tab: Friends View Space -->
-            <div id="friends-tab-content" class="flex-1 p-6 space-y-6">
-              <!-- Content injected dynamically -->
-            </div>
-          </div>
+            <div id="auth-error" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded"></div>
 
-          <!-- Real Messages viewport -->
-          <div id="chat-messages-container" class="hidden flex-1 overflow-y-auto px-4 py-6 space-y-6"></div>
-
-          <!-- Auto-Mention Suggestion Panel overlay -->
-          <div id="mention-suggestions-panel" class="hidden absolute left-4 bottom-24 w-64 bg-zinc-950/95 border border-zinc-800 rounded-xl shadow-2xl p-2 z-50 text-xs">
-            <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider px-2.5 py-1 mb-1 border-b border-zinc-800">Guildmates to mention</div>
-            <div id="mention-suggestions-list" class="space-y-0.5 max-h-40 overflow-y-auto"></div>
-          </div>
-
-          <!-- Bottom Text box input controller -->
-          <div id="chat-input-area" class="hidden px-4 pb-6 select-none relative">
-            <div class="bg-black/15 border border-white/5 rounded-lg p-2.5 flex flex-col gap-2">
-              
-              <!-- Selected virtual attachment indicator -->
-              <div id="attachment-preview-box" class="hidden relative inline-block max-w-[120px] mb-2 self-start">
-                <img id="attachment-preview-img" src="" alt="preview" class="w-20 h-20 rounded object-cover border border-indigo-400">
-                <button onclick="clearAttachment()" class="absolute -top-1.5 -right-1.5 bg-[#f23f43] text-white p-0.5 rounded-full hover:scale-110">
-                  <i data-lucide="x" class="w-3 h-3"></i>
-                </button>
-              </div>
-
-              <!-- Message Form -->
-              <form id="message-form" onsubmit="handleSendMessage(event)" class="flex items-center gap-3">
-                <div class="relative">
-                  <!-- File Attach Trigger -->
-                  <button type="button" onclick="toggleImageDropdown()" class="w-7 h-7 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white flex items-center justify-center hover:scale-105 transition">
-                    <i data-lucide="plus" class="w-4.5 h-4.5 font-extrabold"></i>
-                  </button>
-
-                  <!-- Simulation dropdown options -->
-                  <div id="attachment-dropdown" class="hidden absolute bottom-10 left-0 w-72 bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl p-3.5 z-50 text-xs">
-                    <div class="font-bold text-white mb-2 flex items-center justify-between">
-                      <span>Free Nitro Upload Simulator</span>
-                      <button type="button" onclick="toggleImageDropdown()"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+            <form id="auth-form" onsubmit="handleAuth(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-2 tracking-wider">Email</label>
+                        <input type="email" id="auth-email" required class="w-full bg-[#1e1f22] border border-[#111214] rounded p-2 text-white focus:outline-none focus:border-indigo-500">
                     </div>
-                    <p class="text-[10px] text-gray-400 mb-3">SpeechCentor provides free 500MB premium file transmissions. Choose a mockup asset to present:</p>
-                    <div class="space-y-1">
-                      <button type="button" onclick="startLargeUploadSimulation('Gameplay_Teaser_HD.mp4', '450 MB')" class="w-full text-left p-2 hover:bg-zinc-800 rounded text-gray-200 flex gap-2 items-center">
-                        <i data-lucide="share-2" class="w-4 h-4 text-pink-400"></i>
-                        <span>Simulate Gameplay.mp4 (450MB)</span>
-                      </button>
-                      <button type="button" onclick="startLargeUploadSimulation('SpeechCentor_Logo.png', '12 MB')" class="w-full text-left p-2 hover:bg-zinc-800 rounded text-gray-200 flex gap-2 items-center">
-                        <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
-                        <span>SpeechCentor Logo.png (12MB)</span>
-                      </button>
-                      <button type="button" onclick="startLargeUploadSimulation('Developer_Manifest.pdf', '180 MB')" class="w-full text-left p-2 hover:bg-zinc-800 rounded text-gray-200 flex gap-2 items-center">
-                        <i data-lucide="file-text" class="w-4 h-4 text-blue-400"></i>
-                        <span>Developer_Manifest.pdf (180MB)</span>
-                      </button>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 uppercase mb-2 tracking-wider">Password</label>
+                        <input type="password" id="auth-password" required class="w-full bg-[#1e1f22] border border-[#111214] rounded p-2 text-white focus:outline-none focus:border-indigo-500">
                     </div>
-                  </div>
                 </div>
 
-                <!-- Input element -->
-                <input id="message-text-input" type="text" autocomplete="off" oninput="handleInputKeyPress(this)" placeholder="Message active channel... (Type @ to mention, click on users)" class="flex-1 bg-transparent border-none focus:ring-0 placeholder-gray-500 text-sm outline-none text-white">
+                <button type="submit" id="auth-submit-btn" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-medium py-3 rounded mt-6 transition duration-150">Log In</button>
+            </form>
 
-                <!-- Emoji selection box toggle -->
-                <div class="relative">
-                  <button type="button" onclick="toggleEmojiBox()" class="text-gray-400 hover:text-yellow-400 transition">
-                    <i data-lucide="smile" class="w-5.5 h-5.5"></i>
-                  </button>
-                  <div id="input-emoji-picker" class="hidden absolute right-0 bottom-10 bg-zinc-950 border border-zinc-800 p-1.5 rounded shadow-2xl flex gap-1 z-50"></div>
-                </div>
-
-                <!-- Send Dispatch -->
-                <button type="submit" class="text-gray-400 hover:text-white transition">
-                  <i data-lucide="send" class="w-5 h-5 text-indigo-400"></i>
-                </button>
-              </form>
-
+            <div class="mt-4 text-sm text-gray-400 text-center">
+                <span id="auth-switch-text">Need an account?</span> 
+                <button onclick="toggleAuthMode()" class="text-[#00aff4] hover:underline font-medium" id="auth-switch-btn">Register</button>
             </div>
-          </div>
-
         </div>
-
-        <!-- FOURTH ELEMENT: Server members stream panel -->
-        <div id="members-list-panel" class="w-60 border-l flex flex-col p-4 overflow-y-auto space-y-4 flex-shrink-0 select-none hidden" style="background-color: var(--sidebar-bg); border-color: rgba(0,0,0,0.15);">
-          <div>
-            <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
-              Online Guild Members
-            </div>
-            <div id="members-container-list" class="space-y-2"></div>
-          </div>
-
-          <div>
-            <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
-              Interactive Assistants
-            </div>
-            <div class="flex items-center gap-2.5 p-1 rounded hover:bg-black/10 transition cursor-pointer" onclick="insertMention('SpeechCentor AI ✨')">
-              <div class="relative">
-                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150" alt="Bot Avatar" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-500">
-                <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-zinc-800"></div>
-              </div>
-              <div>
-                <div class="text-sm font-bold text-indigo-300">SpeechCentor AI</div>
-                <div class="text-[10px] bg-indigo-600 text-white px-1.5 py-0.2 rounded uppercase font-black text-center max-w-max mt-0.5">
-                  INTEGRATED
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
     </div>
 
-  </div>
-
-  <!-- ==================== MODALS CONFIGURATIONS ==================== -->
-
-  <!-- MODAL 1: Create Server -->
-  <div id="create-server-modal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-    <div class="bg-[#313338] w-full max-w-md rounded-lg overflow-hidden shadow-2xl border border-zinc-700">
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-white">Create Server</h3>
-          <button onclick="closeModal('create-server-modal')" class="text-gray-400 hover:text-white">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-        </div>
-        <p class="text-xs text-gray-400 mb-6">Create a themed SpeechCentor space. Assign an icon representation to begin.</p>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-white uppercase mb-2">Emoji Representation</label>
-            <div class="flex gap-2" id="emoji-selectors-group">
-              <button onclick="selectServerIcon('🎮')" class="emoji-opt w-10 h-10 rounded text-xl flex items-center justify-center border border-pink-500 bg-pink-500/20 text-white">🎮</button>
-              <button onclick="selectServerIcon('🛡️')" class="emoji-opt w-10 h-10 rounded text-xl flex items-center justify-center border border-zinc-700 bg-zinc-800 text-white">🛡️</button>
-              <button onclick="selectServerIcon('💎')" class="emoji-opt w-10 h-10 rounded text-xl flex items-center justify-center border border-zinc-700 bg-zinc-800 text-white">💎</button>
-              <button onclick="selectServerIcon('🎉')" class="emoji-opt w-10 h-10 rounded text-xl flex items-center justify-center border border-zinc-700 bg-zinc-800 text-white">🎉</button>
-              <button onclick="selectServerIcon('🚀')" class="emoji-opt w-10 h-10 rounded text-xl flex items-center justify-center border border-zinc-700 bg-zinc-800 text-white">🚀</button>
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-white uppercase mb-2">Server Name</label>
-            <input id="server-name-input" type="text" placeholder="Gamer lounge" class="w-full bg-zinc-900 border border-zinc-800 rounded p-2.5 text-sm text-white outline-none focus:ring-1 focus:ring-pink-500" maxlength="25">
-          </div>
-        </div>
-      </div>
-      <div class="bg-zinc-800 px-6 py-4 flex justify-end gap-3">
-        <button onclick="closeModal('create-server-modal')" class="text-white hover:underline text-sm font-semibold">Cancel</button>
-        <button onclick="submitCreateServer()" class="bg-pink-600 hover:bg-pink-500 text-white px-5 py-2 rounded text-sm font-bold transition">Create Server</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 2: Create Channel -->
-  <div id="create-channel-modal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-    <div class="bg-[#313338] w-full max-w-md rounded-lg overflow-hidden shadow-2xl border border-zinc-700">
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-white">Create Channel</h3>
-          <button onclick="closeModal('create-channel-modal')" class="text-gray-400 hover:text-white">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-        </div>
-
-        <div class="space-y-5">
-          <div>
-            <label class="block text-xs font-bold text-white uppercase mb-2">Channel Type</label>
-            <div class="grid grid-cols-2 gap-3">
-              <button onclick="selectChannelType('text')" id="type-opt-text" class="p-3 rounded border border-pink-500 bg-pink-500/10 text-left flex items-start gap-3 transition">
-                <i data-lucide="hash" class="w-5 h-5 text-pink-400 flex-shrink-0 mt-0.5"></i>
-                <div>
-                  <div class="text-sm font-bold text-white">Text</div>
-                  <div class="text-[10px] text-gray-400">Messages & images</div>
-                </div>
-              </button>
-              <button onclick="selectChannelType('volume-2')" id="type-opt-voice" class="p-3 rounded border border-zinc-700 bg-zinc-800 text-left flex items-start gap-3 transition">
-                <i data-lucide="volume-2" class="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5"></i>
-                <div>
-                  <div class="text-sm font-bold text-white">Voice</div>
-                  <div class="text-[10px] text-gray-400">96kHz Audio presence</div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-white uppercase mb-2">Channel Name</label>
-            <div class="relative">
-              <span class="absolute left-3 top-2.5 text-gray-500 font-bold">#</span>
-              <input id="channel-name-input" type="text" placeholder="general-chat" class="w-full bg-zinc-900 border border-zinc-800 rounded p-2.5 pl-7 text-sm text-white outline-none focus:ring-1 focus:ring-pink-500 animate-none" maxlength="20">
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-zinc-800 px-6 py-4 flex justify-end gap-3">
-        <button onclick="closeModal('create-channel-modal')" class="text-white hover:underline text-sm font-semibold">Cancel</button>
-        <button onclick="submitCreateChannel()" class="bg-pink-600 hover:bg-pink-500 text-white px-5 py-2 rounded text-sm font-bold transition">Create Channel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 3: Themes Settings Panel -->
-  <div id="theme-modal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 w-full max-w-lg rounded-lg overflow-hidden shadow-2xl border border-zinc-800">
-      <div class="p-6 space-y-4">
-        <div class="flex justify-between items-center">
-          <div>
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-              <i data-lucide="palette" class="w-5 h-5 text-pink-400 animate-spin"></i> Premium Themes Engine (Nitro)
-            </h3>
-            <p class="text-xs text-gray-400">Select any prebuilt setup or open the advanced developer spectrum wheels.</p>
-          </div>
-          <button onclick="closeModal('theme-modal')" class="text-gray-400 hover:text-white">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-        </div>
-
-        <!-- Presets grid -->
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-gray-300 uppercase">Preset Palettes</label>
-          <div id="themes-presets-grid" class="grid grid-cols-2 gap-2"></div>
-        </div>
-
-        <!-- Manual Color configuration wheels -->
-        <div class="border-t border-zinc-800 pt-3">
-          <button onclick="toggleCustomThemeCreator()" class="text-xs text-pink-400 hover:underline font-bold flex items-center gap-1.5">
-            ⚙️ <span id="creator-toggle-text">Open Custom Palette Editor</span>
-          </button>
-
-          <div id="custom-theme-creator-box" class="hidden grid grid-cols-2 gap-3 mt-3 bg-zinc-950 p-3 rounded border border-zinc-800">
-            <div class="space-y-1">
-              <label class="block text-[10px] text-gray-400 font-bold uppercase">Accent Action</label>
-              <div class="flex items-center gap-2">
-                <input type="color" id="picker-accent" value="#5865f2" onchange="applyCustomInputsTheme()" class="w-7 h-7 rounded cursor-pointer">
-                <span id="label-accent" class="text-xs text-white">#5865f2</span>
-              </div>
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[10px] text-gray-400 font-bold uppercase">Chat Background</label>
-              <div class="flex items-center gap-2">
-                <input type="color" id="picker-chat" value="#313338" onchange="applyCustomInputsTheme()" class="w-7 h-7 rounded cursor-pointer">
-                <span id="label-chat" class="text-xs text-white">#313338</span>
-              </div>
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[10px] text-gray-400 font-bold uppercase">Sidebar Base</label>
-              <div class="flex items-center gap-2">
-                <input type="color" id="picker-sidebar" value="#2b2d31" onchange="applyCustomInputsTheme()" class="w-7 h-7 rounded cursor-pointer">
-                <span id="label-sidebar" class="text-xs text-white">#2b2d31</span>
-              </div>
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[10px] text-gray-400 font-bold uppercase">Accent Text</label>
-              <div class="flex items-center gap-2">
-                <input type="color" id="picker-text" value="#dbdee1" onchange="applyCustomInputsTheme()" class="w-7 h-7 rounded cursor-pointer">
-                <span id="label-text" class="text-xs text-white">#dbdee1</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-      <div class="bg-zinc-850 px-6 py-4 flex justify-end">
-        <button onclick="closeModal('theme-modal')" class="bg-pink-600 hover:bg-pink-500 text-white px-5 py-2 rounded text-sm font-bold transition">Done</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 4: User Profile Setup (Custom Avatar & Banners saved to Firestore) -->
-  <div id="profile-modal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
-    <div class="bg-[#1e1f22] w-full max-w-xl rounded-lg overflow-hidden shadow-2xl border border-zinc-700 animate-in fade-in duration-200">
-      
-      <!-- Live Nitro Profile Card Preview banner -->
-      <div id="profile-preview-banner" class="h-32 relative flex items-end px-6 transition-all duration-300" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-        <div class="absolute -bottom-10 left-6">
-          <img id="profile-preview-avatar" src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150" alt="Avatar Preview" class="w-20 h-20 rounded-full border-4 border-[#1e1f22] object-cover bg-zinc-800">
-        </div>
-        <div class="absolute top-3 right-3 bg-black/60 text-pink-400 font-extrabold text-[10px] uppercase px-2 py-1 rounded flex items-center gap-1 select-none">
-          <i data-lucide="gem" class="w-3 h-3 animate-spin"></i> Custom Nitro Profile
-        </div>
-      </div>
-
-      <div class="pt-12 p-6 space-y-4 max-h-[50vh] overflow-y-auto no-scrollbar">
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-              SpeechCentor Identity Console <i data-lucide="gem" class="text-pink-500 w-5 h-5"></i>
-            </h3>
-            <p class="text-xs text-gray-400">Personalize display tags, custom banners and badges. Everything is securely synchronized to Firestore.</p>
-          </div>
-          <button onclick="closeModal('profile-modal')" class="text-gray-400 hover:text-white">
-            <i data-lucide="x" class="w-5 h-5"></i>
-          </button>
-        </div>
-
-        <div class="bg-black/30 border border-zinc-800 p-2.5 rounded-lg flex items-center justify-between text-xs text-zinc-300 select-all cursor-pointer hover:bg-black/50 transition mb-3" onclick="copyTagToClipboard()">
-          <span class="flex items-center gap-1.5 font-medium"><i data-lucide="info" class="w-4 h-4 text-purple-400"></i> Click to Copy your unique user mention tag:</span>
-          <span id="my-tag-display" class="font-bold text-pink-400 font-mono">Loading...</span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div class="space-y-1">
-            <label class="block text-xs font-bold text-gray-300 uppercase">Tagname</label>
-            <input id="profile-input-name" type="text" oninput="updateProfilePreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-sm text-white outline-none focus:ring-1 focus:ring-pink-500">
-          </div>
-          <div class="space-y-1">
-            <label class="block text-xs font-bold text-gray-300 uppercase">Status Message</label>
-            <input id="profile-input-status" type="text" oninput="updateProfilePreview()" class="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-sm text-white outline-none focus:ring-1 focus:ring-pink-500">
-          </div>
-        </div>
-
-        <!-- Custom Image & PFP Links (Firestore Synced) -->
-        <div class="p-3 bg-zinc-950/50 rounded border border-zinc-800/80 space-y-3">
-          <div class="flex items-center gap-2 text-xs font-bold text-pink-400 uppercase">
-            <i data-lucide="image" class="w-4 h-4"></i> Upload Custom Graphics (Firestore Saved)
-          </div>
-          
-          <div class="space-y-1">
-            <label class="flex justify-between items-center text-[11px] text-gray-400">
-              <span>Custom Profile Picture URL</span>
-              <button onclick="triggerFileUpload('avatar')" class="text-pink-400 hover:text-pink-300 font-bold flex items-center gap-1">
-                <i data-lucide="upload" class="w-3 h-3"></i> Upload & Crop
-              </button>
-            </label>
-            <input id="profile-input-avatar-url" type="text" oninput="updateProfilePreview()" placeholder="https://example.com/avatar.png" class="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white outline-none focus:ring-1 focus:ring-pink-500 placeholder-zinc-600">
-            <input type="file" id="file-upload-avatar" accept="image/*" class="hidden" onchange="handleFileSelect(event, 'avatar')">
-          </div>
-
-          <div class="space-y-1">
-            <label class="flex justify-between items-center text-[11px] text-gray-400">
-              <span>Custom Banner Image URL (or CSS gradient)</span>
-              <button onclick="triggerFileUpload('banner')" class="text-pink-400 hover:text-pink-300 font-bold flex items-center gap-1">
-                <i data-lucide="upload" class="w-3 h-3"></i> Upload & Crop
-              </button>
-            </label>
-            <input id="profile-input-banner-url" type="text" oninput="updateProfilePreview()" placeholder="https://example.com/banner.jpg" class="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-xs text-white outline-none focus:ring-1 focus:ring-pink-500 placeholder-zinc-600">
-            <input type="file" id="file-upload-banner" accept="image/*" class="hidden" onchange="handleFileSelect(event, 'banner')">
-          </div>
-        </div>
-
-        <!-- Preset Banners -->
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-gray-300 uppercase">Preset Banners (Quick selection)</label>
-          <div id="preset-banners-grid" class="grid grid-cols-6 gap-2"></div>
-        </div>
-
-        <!-- Preset Avatars -->
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-gray-300 uppercase">Preset Avatars (Quick selection)</label>
-          <div id="preset-avatars-flex" class="flex flex-wrap gap-2"></div>
-        </div>
-
-        <!-- Badges selector -->
-        <div class="space-y-2">
-          <label class="block text-xs font-bold text-gray-300 uppercase">Identity Badges</label>
-          <div id="badges-selection-group" class="flex flex-wrap gap-2"></div>
-        </div>
-
-      </div>
-
-      <div class="bg-zinc-900 px-6 py-4 flex justify-end gap-3 border-t border-zinc-800">
-        <button onclick="closeModal('profile-modal')" class="px-4 py-2 text-xs text-gray-400 hover:text-white transition">Cancel</button>
-        <button onclick="submitSaveProfile()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded text-sm font-bold transition hover:scale-105">Save Identity Settings</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 5: Upload progress mockup -->
-  <div id="upload-progress-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-    <div class="bg-zinc-900 w-full max-w-md rounded-lg overflow-hidden shadow-2xl p-6 border border-zinc-800 text-center space-y-4">
-      <div class="mx-auto w-12 h-12 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-white animate-spin">
-        <i data-lucide="upload-cloud" class="w-6 h-6"></i>
-      </div>
-      <div>
-        <h4 class="text-lg font-bold text-white">Supercharged Nitro Transmission...</h4>
-        <p class="text-xs text-gray-400 mt-1">Uploading: <span id="uploading-file-name" class="text-pink-400 font-bold"></span> (<span id="uploading-file-size"></span>)</p>
-      </div>
-      <div class="space-y-1">
-        <div class="w-full bg-zinc-800 rounded-full h-2.5 overflow-hidden">
-          <div id="upload-progress-bar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-full transition-all duration-150" style="width: 0%;"></div>
-        </div>
-        <div class="flex justify-between text-[10px] text-gray-400 font-semibold">
-          <span id="upload-progress-percentage">0% Completed</span>
-          <span class="text-pink-400">Nitro Compression On</span>
-        </div>
-      </div>
-      <p class="text-[10px] text-gray-500">SpeechCentor high-performance pipeline compression transfers major blocks instantly.</p>
-    </div>
-  </div>
-
-  <!-- MODAL 6: Cropper Editor -->
-  <div id="crop-modal" class="hidden fixed inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-4">
-    <div class="bg-zinc-900 w-full max-w-2xl rounded-lg overflow-hidden shadow-2xl border border-zinc-800 flex flex-col">
-      <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <i data-lucide="crop" class="w-5 h-5 text-pink-400"></i> Adjust Image
-        </h3>
-        <button onclick="closeCropperModal()" class="text-gray-400 hover:text-white">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      
-      <div class="w-full bg-black flex items-center justify-center overflow-hidden" style="height: 50vh;">
-        <!-- Cropper Target -->
-        <img id="cropper-image" src="" alt="Picture to crop" class="max-w-full max-h-full block">
-      </div>
-      
-      <div class="bg-zinc-950 px-6 py-4 flex justify-between items-center gap-3 border-t border-zinc-800">
-        <p class="text-xs text-zinc-500">Scroll to zoom. Drag to reposition. The resulting Base64 string will be stored directly into your Firebase storage limits securely.</p>
-        <div class="flex items-center gap-3">
-          <button onclick="closeCropperModal()" class="px-4 py-2 text-xs text-gray-400 hover:text-white transition">Cancel</button>
-          <button onclick="confirmCrop()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded text-sm font-bold transition hover:scale-105 flex items-center gap-2">
-            <i data-lucide="check" class="w-4 h-4"></i> Crop & Save
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== LOGIC & DATABASE CODES ==================== -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // --- Firebase Setup ---
-    const defaultFirebaseConfig = {
-      apiKey: "AIzaSyAMAiYmLy2k5feaWbUHE7n5TUNlZGAr6nk",
-      authDomain: "speechcentor.firebaseapp.com",
-      projectId: "speechcentor",
-      storageBucket: "speechcentor.firebasestorage.app",
-      messagingSenderId: "804696408540",
-      appId: "1:804696408540:web:855cae2217b55dca0a4f19",
-      measurementId: "G-HQ93JH0QCU"
-    };
-
-    const firebaseConfig = typeof __firebase_config !== 'undefined'
-      ? JSON.parse(__firebase_config)
-      : defaultFirebaseConfig;
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'speechcentor-app';
-
-    // Constants
-    const PRESET_AVATARS = [
-      "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=60", 
-      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=60", 
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=60", 
-      "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=60", 
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=60", 
-      "https://images.unsplash.com/photo-1628157582853-a796fa650a6a?w=150&auto=format&fit=crop&q=60"  
-    ];
-
-    const PRESET_BANNERS = [
-      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      "linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)",
-      "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-      "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-      "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80"
-    ];
-
-    const PRESET_THEMES = [
-      { id: 'dark-classic', name: 'Midnight Dark', sidebarBg: '#2b2d31', chatBg: '#313338', serverBg: '#1e1f22', accentColor: '#5865f2', textColor: '#dbdee1', headerBg: '#1f2023', cardBg: '#111214' },
-      { id: 'cosmic-purple', name: 'Cosmic Nebula (Nitro)', sidebarBg: '#1b122c', chatBg: '#241a3e', serverBg: '#0f0a1c', accentColor: '#a855f7', textColor: '#e9d5ff', headerBg: '#150d22', cardBg: '#0f091a' },
-      { id: 'cyberpunk-neon', name: 'Neon Grid (Nitro)', sidebarBg: '#0c0f1d', chatBg: '#121829', serverBg: '#05070f', accentColor: '#06b6d4', textColor: '#e0f2fe', headerBg: '#0a0d18', cardBg: '#04060d' },
-      { id: 'forest-emerald', name: 'Sage Forest', sidebarBg: '#1c2421', chatBg: '#232e2a', serverBg: '#121715', accentColor: '#10b981', textColor: '#d1fae5', headerBg: '#161d1b', cardBg: '#0d1110' },
-      { id: 'crimson-fire', name: 'Crimson Fury (Nitro)', sidebarBg: '#281212', chatBg: '#341a1a', serverBg: '#180a0a', accentColor: '#ef4444', textColor: '#fee2e2', headerBg: '#1d0c0c', cardBg: '#120707' },
-      { id: 'light-pure', name: 'SpeechCentor Light', sidebarBg: '#f2f3f5', chatBg: '#ffffff', serverBg: '#e3e5e8', accentColor: '#5865f2', textColor: '#313338', headerBg: '#ebedf0', cardBg: '#f2f3f5' }
-    ];
-
-    const EMOJIS = ['👍', '❤️', '🔥', '😂', '😮', '🎉', '🚀', '💯', '👑', '💸', '✨', '👾'];
-
-    // --- State Storage ---
-    const state = {
-      user: null,
-      userName: '',
-      userAvatar: PRESET_AVATARS[0],
-      customStatus: 'Enjoying Free SpeechCentor Nitro 💎',
-      isMuted: false,
-      isDeafened: false,
-      activeTheme: PRESET_THEMES[0],
-      customBanner: PRESET_BANNERS[0],
-      selectedBadges: ['nitro', 'booster', 'early'],
-
-      // DB synchronized states
-      servers: [],
-      channels: [],
-      messages: [],
-      usersOnline: [],
-      friends: [], // Synchronized friends list
-
-      // Navigation
-      activeServerId: 'home',
-      activeChannelId: null,
-      currentVoiceChannelId: null,
-      activeFriendsTab: 'online', // 'online' | 'all' | 'add'
-
-      // Modal custom selections
-      newServerIcon: '🎮',
-      newChannelType: 'text',
-
-      // File Attachment & Mentions UI state
-      simulatedAttachment: null,
-      showMembersList: true,
-      lastInputVal: ''
-    };
-
-    // --- CROPPER ENGINE ---
-    let cropperInstance = null;
-    let currentCropType = 'avatar';
-
-    window.triggerFileUpload = (type) => {
-      currentCropType = type;
-      const fileInput = document.getElementById(type === 'avatar' ? 'file-upload-avatar' : 'file-upload-banner');
-      fileInput.click();
-    };
-
-    window.handleFileSelect = (event, type) => {
-      const file = event.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        openCropperModal(e.target.result, type);
-      };
-      reader.readAsDataURL(file);
-      event.target.value = ''; // reset so same file can be chosen again
-    };
-
-    window.openCropperModal = (imageSrc, type) => {
-      const modal = document.getElementById('crop-modal');
-      const img = document.getElementById('cropper-image');
-      img.src = imageSrc;
-      modal.classList.remove('hidden');
-      
-      if (cropperInstance) {
-        cropperInstance.destroy();
-      }
-      
-      // 1:1 Aspect ratio for PFPs, ~3:1 for Banners
-      const aspectRatio = type === 'avatar' ? 1 : (900 / 300);
-      
-      cropperInstance = new Cropper(img, {
-        aspectRatio: aspectRatio,
-        viewMode: 1,
-        autoCropArea: 1,
-        background: false
-      });
-    };
-
-    window.confirmCrop = () => {
-      if (!cropperInstance) return;
-      
-      // Set fixed maximum canvas bounds so Firestore Base64 doesn't get massive. 
-      const canvasParams = currentCropType === 'avatar' 
-        ? { width: 256, height: 256 } 
-        : { width: 900, height: 300 };
+    <div id="app-dashboard" class="hidden h-full w-full flex">
         
-      const canvas = cropperInstance.getCroppedCanvas(canvasParams);
-      
-      // Aggressive JPEG compression for Firestore storage limit safety
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      
-      if (currentCropType === 'avatar') {
-        document.getElementById('profile-input-avatar-url').value = dataUrl;
-      } else {
-        document.getElementById('profile-input-banner-url').value = dataUrl;
-      }
-      
-      updateProfilePreview();
-      closeCropperModal();
-    };
+        <div class="discord-servers w-[72px] flex flex-col items-center py-3 space-y-2 shrink-0">
+            <div class="w-12 h-12 rounded-3xl bg-[#313338] hover:rounded-2xl hover:bg-[#5865F2] flex items-center justify-center cursor-pointer transition-all duration-200 text-white font-bold">
+                DC
+            </div>
+            <div class="w-8 h-[2px] bg-[#35363c] rounded"></div>
+            <div class="w-12 h-12 rounded-3xl bg-[#2b2d31] hover:rounded-2xl hover:bg-[#23a55a] flex items-center justify-center cursor-pointer transition-all duration-200 text-gray-300 hover:text-white font-bold text-xl">+</div>
+        </div>
 
-    window.closeCropperModal = () => {
-      document.getElementById('crop-modal').classList.add('hidden');
-      if (cropperInstance) {
-        cropperInstance.destroy();
-        cropperInstance = null;
-      }
-    };
-
-
-    // Make state modifier helpers globally accessible
-    window.switchServer = (id) => {
-      state.activeServerId = id;
-      state.activeChannelId = null;
-      updateNavigationUI();
-      renderChannels();
-      renderChat();
-    };
-
-    window.switchChannel = (id) => {
-      state.activeChannelId = id;
-      updateNavigationUI();
-      renderChat();
-    };
-
-    window.joinVoiceChannel = (id) => {
-      playSoundEffect('synth-beep');
-      if (state.currentVoiceChannelId === id) {
-        state.currentVoiceChannelId = null;
-        triggerNotification("Disconnected from Voice Channel", "info");
-      } else {
-        state.currentVoiceChannelId = id;
-        triggerNotification("Connected with ultra premium high-bitrate audio! 🎙️", "success");
-      }
-      updateUserProfilePresence();
-      renderChannels();
-    };
-
-    window.disconnectVoice = () => {
-      state.currentVoiceChannelId = null;
-      updateUserProfilePresence();
-      renderChannels();
-      triggerNotification("Left voice stream", "info");
-    };
-
-    window.toggleSoundboard = () => {
-      const drawer = document.getElementById('soundboard-drawer');
-      drawer.classList.toggle('hidden');
-    };
-
-    window.toggleMute = () => {
-      state.isMuted = !state.isMuted;
-      const btn = document.getElementById('mute-toggle');
-      if (state.isMuted) {
-        btn.classList.add('text-rose-500');
-        btn.innerHTML = `<i data-lucide="mic-off" class="w-4 h-4"></i>`;
-      } else {
-        btn.classList.remove('text-rose-500');
-        btn.innerHTML = `<i data-lucide="mic" class="w-4 h-4"></i>`;
-      }
-      lucide.createIcons();
-      updateUserProfilePresence();
-    };
-
-    window.toggleDeafen = () => {
-      state.isDeafened = !state.isDeafened;
-      const btn = document.getElementById('deafen-toggle');
-      if (state.isDeafened) {
-        btn.classList.add('text-rose-500');
-      } else {
-        btn.classList.remove('text-rose-500');
-      }
-      updateUserProfilePresence();
-    };
-
-    window.toggleMembersList = () => {
-      state.showMembersList = !state.showMembersList;
-      const panel = document.getElementById('members-list-panel');
-      const btn = document.getElementById('toggle-members-btn');
-      if (state.showMembersList) {
-        panel.classList.remove('hidden');
-        btn.classList.add('text-pink-400');
-      } else {
-        panel.classList.add('hidden');
-        btn.classList.remove('text-pink-400');
-      }
-    };
-
-    // Custom sound synthetic triggers
-    window.playSoundEffect = (type) => {
-      playSoundEffect(type);
-    };
-
-    // --- Toast triggers ---
-    const triggerNotification = (text, type = "success") => {
-      const banner = document.getElementById('toast-banner');
-      const textElem = document.getElementById('toast-text');
-      textElem.textContent = text;
-      
-      banner.classList.remove('hidden');
-      setTimeout(() => {
-        banner.classList.add('translate-y-0', 'opacity-100');
-        banner.classList.remove('translate-y-[-20px]', 'opacity-0');
-      }, 50);
-
-      setTimeout(() => {
-        hideToast();
-      }, 4000);
-    };
-
-    window.hideToast = () => {
-      const banner = document.getElementById('toast-banner');
-      banner.classList.remove('translate-y-0', 'opacity-100');
-      banner.classList.add('translate-y-[-20px]', 'opacity-0');
-      setTimeout(() => {
-        banner.classList.add('hidden');
-      }, 300);
-    };
-
-    // --- Modal Actions ---
-    window.openModal = (id) => {
-      document.getElementById(id).classList.remove('hidden');
-      if (id === 'profile-modal') {
-        // Load settings inputs
-        document.getElementById('profile-input-name').value = state.userName;
-        document.getElementById('profile-input-status').value = state.customStatus;
-        document.getElementById('profile-input-avatar-url').value = state.userAvatar;
-        document.getElementById('profile-input-banner-url').value = state.customBanner;
-        document.getElementById('my-tag-display').textContent = state.userName;
-        updateProfilePreview();
-      }
-    };
-
-    window.closeModal = (id) => {
-      document.getElementById(id).classList.add('hidden');
-    };
-
-    // Copy tag clipboard logic (using execCommand for broad IFrame support)
-    window.copyTagToClipboard = (optionalText = null) => {
-      const textToCopy = optionalText || state.userName;
-      const el = document.createElement('textarea');
-      el.value = textToCopy;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-      triggerNotification(`Copied tag "${textToCopy}" to clipboard!`);
-    };
-
-    // --- Friends List Manager & Sync ---
-    window.switchFriendsTab = (tab) => {
-      state.activeFriendsTab = tab;
-      
-      // Update Tab Styles
-      const tabs = ['online', 'all', 'add'];
-      tabs.forEach(t => {
-        const tabBtn = document.getElementById(`tab-friend-${t}`);
-        if (t === tab) {
-          if (t === 'add') {
-            tabBtn.className = "bg-emerald-600 text-white px-3 py-1 rounded transition font-bold";
-          } else {
-            tabBtn.className = "text-white bg-white/10 px-3 py-1 rounded transition font-bold";
-          }
-        } else {
-          if (t === 'add') {
-            tabBtn.className = "text-emerald-400 hover:text-white border border-emerald-500/30 px-3 py-1 rounded transition";
-          } else {
-            tabBtn.className = "text-gray-400 hover:text-white px-3 py-1 rounded transition";
-          }
-        }
-      });
-
-      renderFriendsTab();
-    };
-
-    window.addFriendByTag = async (tag) => {
-      if (!tag) return;
-      const trimmedTag = tag.trim();
-      if (trimmedTag === state.userName) {
-        triggerNotification("You can't add yourself as a friend!", "info");
-        return;
-      }
-
-      // Check if user is active/online first
-      const foundUser = state.usersOnline.find(u => u.name.toLowerCase() === trimmedTag.toLowerCase());
-      
-      if (!foundUser) {
-        triggerNotification(`Could not find active user "${trimmedTag}". Ensure they are online!`, "info");
-        return;
-      }
-
-      // Check if already friends
-      if (state.friends.some(f => f.uid === foundUser.id)) {
-        triggerNotification(`You are already friends with ${foundUser.name}!`, "info");
-        return;
-      }
-
-      try {
-        // Safe private document write following Rule 1 & Rule 3
-        const friendRef = doc(db, 'artifacts', appId, 'users', state.user.uid, 'friends', foundUser.id);
-        await setDoc(friendRef, {
-          uid: foundUser.id,
-          name: foundUser.name,
-          avatar: foundUser.avatar,
-          customStatus: foundUser.customStatus || 'Online',
-          addedAt: Date.now()
-        });
-
-        triggerNotification(`Added ${foundUser.name} as a friend! 🤝`, "success");
-      } catch (err) {
-        console.error("Error adding friend: ", err);
-      }
-    };
-
-    window.removeFriend = async (friendId, friendName) => {
-      try {
-        await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'friends', friendId));
-        triggerNotification(`Removed ${friendName} from friends.`, "info");
-      } catch (err) {
-        console.error("Error removing friend: ", err);
-      }
-    };
-
-    const renderFriendsTab = () => {
-      const container = document.getElementById('friends-tab-content');
-      if (!container) return;
-
-      if (state.activeFriendsTab === 'add') {
-        container.innerHTML = `
-          <div class="space-y-6 max-w-md animate-in fade-in duration-150">
-            <div>
-              <h4 class="text-white font-bold text-sm uppercase tracking-wider mb-1">Add Friend</h4>
-              <p class="text-xs text-zinc-400">You can add friends with their unique tag. Keep in mind they must be online for discovery!</p>
+        <div class="discord-channels w-60 flex flex-col shrink-0">
+            <div class="h-12 border-b border-[#1f2023] flex items-center justify-between px-4 font-bold text-white shadow-sm">
+                <span>Discord Clone</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
             </div>
             
-            <div class="flex gap-2">
-              <input id="friend-tag-input" type="text" placeholder="Enter tag name (e.g. Gamer#1234)" class="flex-1 bg-zinc-900 border border-zinc-800 rounded p-2.5 text-sm text-white outline-none focus:ring-1 focus:ring-pink-500">
-              <button onclick="addFriendByTag(document.getElementById('friend-tag-input').value)" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-4 py-2.5 rounded hover:scale-105 transition">Send Friend Request</button>
-            </div>
-
-            <!-- List of other active users online to quickly add during testing -->
-            <div class="pt-4 border-t border-zinc-800/80">
-              <h5 class="text-xs font-bold text-zinc-300 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                <i data-lucide="compass" class="w-4 h-4 text-emerald-400"></i> Active Users In Guildmates (Quick Add)
-              </h5>
-              <div class="space-y-2 max-h-60 overflow-y-auto">
-                ${state.usersOnline.filter(u => u.id !== state.user?.uid).map(u => {
-                  const isFriend = state.friends.some(f => f.uid === u.id);
-                  return `
-                    <div class="flex items-center justify-between p-2 bg-black/20 hover:bg-black/40 rounded-lg border border-zinc-800/50 transition">
-                      <div class="flex items-center gap-2.5">
-                        <img src="${u.avatar}" alt="avatar" class="w-8 h-8 rounded-full object-cover">
-                        <div>
-                          <div class="text-xs font-bold text-white">${u.name}</div>
-                          <div class="text-[10px] text-zinc-400 truncate max-w-[200px]">${u.customStatus || 'Active Now'}</div>
+            <div class="flex-1 overflow-y-auto px-2 py-4 space-y-4">
+                <div>
+                    <div class="text-xs font-bold text-gray-400 px-2 uppercase tracking-wider mb-1 flex items-center justify-between">
+                        <span>Text Channels</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    </div>
+                    <div class="space-y-0.5">
+                        <div class="flex items-center space-x-2 px-2 py-1.5 rounded bg-[#35373c] text-white cursor-pointer">
+                            <span class="text-gray-400 text-lg">#</span>
+                            <span class="font-medium text-sm">general</span>
                         </div>
-                      </div>
-                      ${isFriend ? `
-                        <span class="text-xs font-semibold text-zinc-500 flex items-center gap-1"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-500"></i> Friends</span>
-                      ` : `
-                        <button onclick="addFriendByTag('${u.name}')" class="bg-pink-600/20 hover:bg-pink-600 border border-pink-500/30 hover:border-transparent text-pink-300 hover:text-white px-2.5 py-1 rounded text-xs font-bold transition">Add</button>
-                      `}
+                        <div class="flex items-center space-x-2 px-2 py-1.5 rounded hover:bg-[#35373c]/60 text-gray-400 hover:text-gray-200 cursor-pointer transition-colors">
+                            <span class="text-gray-400 text-lg">#</span>
+                            <span class="font-medium text-sm">welcome</span>
+                        </div>
                     </div>
-                  `;
-                }).join('') || `<p class="text-xs text-zinc-500">No other online guildmates spotted currently. Open another incognito tab to test real-time social connections!</p>`}
-              </div>
+                </div>
             </div>
-          </div>
-        `;
-        lucide.createIcons();
-        return;
-      }
 
-      // Online vs All list builder
-      const onlineFriendIds = state.usersOnline.map(u => u.id);
-      const displayedFriends = state.activeFriendsTab === 'online' 
-        ? state.friends.filter(f => onlineFriendIds.includes(f.uid))
-        : state.friends;
-
-      if (displayedFriends.length === 0) {
-        container.innerHTML = `
-          <div class="flex flex-col items-center justify-center p-8 text-center select-none h-64">
-            <i data-lucide="users" class="w-12 h-12 text-zinc-600 mb-2"></i>
-            <h4 class="text-sm font-bold text-zinc-300">No friends to show here yet</h4>
-            <p class="text-xs text-zinc-500 max-w-xs mt-1">Navigate to the "Add Friend" tab to invite someone online or quick add guildmates!</p>
-          </div>
-        `;
-        lucide.createIcons();
-        return;
-      }
-
-      container.innerHTML = `
-        <div class="text-xs font-bold text-zinc-400 uppercase tracking-wide mb-3">
-          ${state.activeFriendsTab === 'online' ? 'Online' : 'All'} Friends — ${displayedFriends.length}
-        </div>
-        <div class="space-y-1">
-          ${displayedFriends.map(friend => {
-            const isOnline = onlineFriendIds.includes(friend.uid);
-            const liveProfile = state.usersOnline.find(u => u.id === friend.uid);
-            const avatar = liveProfile?.avatar || friend.avatar;
-            const status = liveProfile?.customStatus || friend.customStatus;
-
-            return `
-              <div class="flex items-center justify-between p-2.5 hover:bg-black/20 rounded-lg group transition">
-                <div class="flex items-center gap-3">
-                  <div class="relative">
-                    <img src="${avatar}" alt="pfp" class="w-9 h-9 rounded-full object-cover">
-                    <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-zinc-800 ${isOnline ? 'bg-emerald-500' : 'bg-zinc-500'}"></div>
-                  </div>
-                  <div>
-                    <div class="text-sm font-bold text-white flex items-center gap-1.5">
-                      <span>${friend.name}</span>
-                      ${isOnline ? `<span class="bg-emerald-500/10 text-emerald-400 text-[9px] px-1 py-0.2 rounded font-black uppercase">Online</span>` : ''}
+            <div class="discord-user-bar h-14 flex items-center justify-between px-2">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center font-bold text-white text-xs" id="nav-user-avatar">U</div>
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-white text-sm font-semibold truncate w-24" id="nav-user-email">User</span>
+                        <span class="text-xs text-[#4e5058]">Online</span>
                     </div>
-                    <div class="text-xs text-zinc-400">${status}</div>
-                  </div>
                 </div>
-
-                <!-- Action links -->
-                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                  <button onclick="insertMention('${friend.name}')" class="p-2 hover:bg-zinc-800 text-gray-400 hover:text-white rounded" title="Mention Friend">
-                    <i data-lucide="smile" class="w-4 h-4"></i>
-                  </button>
-                  <button onclick="removeFriend('${friend.uid}', '${friend.name}')" class="p-2 hover:bg-zinc-800 text-gray-400 hover:text-rose-500 rounded" title="Remove Friend">
-                    <i data-lucide="trash" class="w-4 h-4"></i>
-                  </button>
-                </div>
-              </div>
-            `;
-          }).join('')}
+                <button onclick="logoutUser()" class="text-gray-400 hover:text-red-400 p-1.5 hover:bg-[#35373c] rounded transition" title="Log Out">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                </button>
+            </div>
         </div>
-      `;
-      lucide.createIcons();
-    };
 
-    // --- Interactive Mentions & Autocomplete Engine ---
-    window.insertMention = (name) => {
-      const inp = document.getElementById('message-text-input');
-      const text = inp.value;
-      
-      // If there is an active '@' trigger we replace it, otherwise append
-      const lastAtIndex = text.lastIndexOf('@');
-      if (lastAtIndex !== -1 && lastAtIndex >= text.length - 15) {
-        inp.value = text.slice(0, lastAtIndex) + `@${name} `;
-      } else {
-        inp.value += `@${name} `;
-      }
+        <div class="discord-chat flex-1 flex flex-col justify-between relative">
+            <div class="h-12 border-b border-[#1f2023] flex items-center px-4 shadow-sm space-x-2">
+                <span class="text-gray-400 text-lg">#</span>
+                <span class="font-bold text-white text-base tracking-wide">general</span>
+                <span class="text-gray-400 text-sm border-l border-gray-700 pl-3 ml-2">Welcome to the general chat!</span>
+            </div>
 
-      document.getElementById('mention-suggestions-panel').classList.add('hidden');
-      inp.focus();
-    };
+            <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+                </div>
 
-    window.handleInputKeyPress = (elem) => {
-      const val = elem.value;
-      state.lastInputVal = val;
-      const suggestionsPanel = document.getElementById('mention-suggestions-panel');
-      const suggestionsList = document.getElementById('mention-suggestions-list');
+            <div class="p-4 pt-0">
+                <form id="message-form" onsubmit="sendMessage(event)" class="bg-[#383a40] rounded-lg p-2.5 flex items-center space-x-3">
+                    <button type="button" class="text-gray-400 hover:text-white bg-[#4e5058] hover:bg-[#6d6f78] p-1 rounded-full"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+                    <input type="text" id="message-input" placeholder="Message #general" class="flex-1 bg-transparent text-white focus:outline-none placeholder-gray-500 text-sm">
+                    <button type="submit" class="hidden">Send</button>
+                </form>
+            </div>
+        </div>
 
-      // Detect active '@' symbol keyp
-      const lastAtIndex = val.lastIndexOf('@');
-      if (lastAtIndex !== -1 && lastAtIndex >= val.length - 15) {
-        const query = val.slice(lastAtIndex + 1).toLowerCase();
-        
-        // Filter users
-        const matches = state.usersOnline.filter(u => u.name.toLowerCase().includes(query));
+    </div>
 
-        if (matches.length > 0) {
-          suggestionsPanel.classList.remove('hidden');
-          suggestionsList.innerHTML = matches.map(u => `
-            <button type="button" onclick="insertMention('${u.name}')" class="w-full flex items-center gap-2 p-1.5 hover:bg-white/10 text-left rounded transition">
-              <img src="${u.avatar}" alt="pfp" class="w-5 h-5 rounded-full object-cover">
-              <span class="font-semibold text-white truncate">${u.name}</span>
-            </button>
-          `).join('');
-          return;
-        }
-      }
-      suggestionsPanel.classList.add('hidden');
-    };
+    <script type="module">
+        // 1. Import Firebase SDK dependencies
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            query, 
+            orderBy, 
+            onSnapshot, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-    // Close elements if clicked outside
-    document.addEventListener('click', (e) => {
-      const suggestionBox = document.getElementById('mention-suggestions-panel');
-      const input = document.getElementById('message-text-input');
-      if (suggestionBox && !suggestionBox.contains(e.target) && e.target !== input) {
-        suggestionBox.classList.add('hidden');
-      }
-    });
-
-    // --- Add/Select Server Helpers ---
-    window.selectServerIcon = (emoji) => {
-      state.newServerIcon = emoji;
-      const buttons = document.querySelectorAll('#emoji-selectors-group button');
-      buttons.forEach(btn => {
-        if (btn.textContent === emoji) {
-          btn.className = "emoji-opt w-10 h-10 rounded text-xl flex items-center justify-center border border-pink-500 bg-pink-500/20 text-white";
-        } else {
-          btn.className = "emoji-opt w-10 h-10 rounded text-xl flex items-center justify-center border border-zinc-700 bg-zinc-800 text-white";
-        }
-      });
-    };
-
-    window.submitCreateServer = async () => {
-      const nameInp = document.getElementById('server-name-input');
-      const name = nameInp.value.trim();
-      if (!name) return;
-
-      try {
-        const sRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'servers'));
-        await setDoc(sRef, {
-          name: name,
-          icon: state.newServerIcon,
-          ownerId: state.user.uid,
-          description: "A gorgeous premium SpeechCentor node.",
-          boosts: 0
-        });
-
-        // Default channels
-        const tRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'channels'));
-        await setDoc(tRef, {
-          serverId: sRef.id,
-          name: "general",
-          type: "text",
-          topic: "Welcome chat for our amazing community!"
-        });
-
-        const vRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'channels'));
-        await setDoc(vRef, {
-          serverId: sRef.id,
-          name: "Lounge Zone",
-          type: "voice"
-        });
-
-        nameInp.value = '';
-        closeModal('create-server-modal');
-        switchServer(sRef.id);
-        triggerNotification("Guild initialized beautifully!", "success");
-      } catch (err) {
-        console.error("Error creating server: ", err);
-      }
-    };
-
-    // --- Channel Helpers ---
-    window.triggerAddChannel = (type) => {
-      state.newChannelType = type;
-      selectChannelType(type);
-      openModal('create-channel-modal');
-    };
-
-    window.selectChannelType = (type) => {
-      state.newChannelType = type;
-      const textBtn = document.getElementById('type-opt-text');
-      const voiceBtn = document.getElementById('type-opt-voice');
-
-      if (type === 'text') {
-        textBtn.className = "p-3 rounded border border-pink-500 bg-pink-500/10 text-left flex items-start gap-3 transition";
-        voiceBtn.className = "p-3 rounded border border-zinc-700 bg-zinc-800 text-left flex items-start gap-3 transition";
-      } else {
-        textBtn.className = "p-3 rounded border border-zinc-700 bg-zinc-800 text-left flex items-start gap-3 transition";
-        voiceBtn.className = "p-3 rounded border border-pink-500 bg-pink-500/10 text-left flex items-start gap-3 transition";
-      }
-    };
-
-    window.submitCreateChannel = async () => {
-      const nameInp = document.getElementById('channel-name-input');
-      const name = nameInp.value.trim().toLowerCase().replace(/\s+/g, '-');
-      if (!name || state.activeServerId === 'home') return;
-
-      try {
-        const cRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'channels'));
-        await setDoc(cRef, {
-          serverId: state.activeServerId,
-          name: name,
-          type: state.newChannelType,
-          topic: state.newChannelType === 'text' ? "SpeechCentor premium ultra-compression pipeline." : ""
-        });
-
-        nameInp.value = '';
-        closeModal('create-channel-modal');
-        if (state.newChannelType === 'text') {
-          switchChannel(cRef.id);
-        }
-        triggerNotification(`Channel #${name} deployed!`);
-      } catch (err) {
-        console.error("Error creating channel: ", err);
-      }
-    };
-
-    window.deleteChannel = async (id) => {
-      try {
-        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'channels', id));
-        triggerNotification("Channel deleted successfully.", "info");
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    // --- Server Boosting ---
-    window.boostActiveServer = async () => {
-      if (state.activeServerId === 'home') return;
-      playSoundEffect('chime');
-      try {
-        const activeServer = state.servers.find(s => s.id === state.activeServerId);
-        if (!activeServer) return;
-
-        const serverRef = doc(db, 'artifacts', appId, 'public', 'data', 'servers', state.activeServerId);
-        const newBoosts = (activeServer.boosts || 0) + 1;
-        await updateDoc(serverRef, { boosts: newBoosts });
-        triggerNotification(`🚀 Server Boosted to ${newBoosts} Boosts!`);
-
-        // Post system message
-        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-          serverId: state.activeServerId,
-          channelId: state.activeChannelId,
-          userId: 'system',
-          userName: 'Server Booster Broadcast',
-          userAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150',
-          content: `⚡ **${state.userName}** just boosted the guild! Audio streams maximized to high fidelity.`,
-          timestamp: Date.now(),
-          reactions: { '🚀': [state.user.uid] }
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    // --- Simulated Upload System ---
-    window.toggleImageDropdown = () => {
-      document.getElementById('attachment-dropdown').classList.toggle('hidden');
-    };
-
-    window.startLargeUploadSimulation = (fileName, size) => {
-      toggleImageDropdown();
-      const modal = document.getElementById('upload-progress-modal');
-      const bar = document.getElementById('upload-progress-bar');
-      const labelName = document.getElementById('uploading-file-name');
-      const labelSize = document.getElementById('uploading-file-size');
-      const labelPercentage = document.getElementById('upload-progress-percentage');
-
-      labelName.textContent = fileName;
-      labelSize.textContent = size;
-      modal.classList.remove('hidden');
-
-      let progress = 0;
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              setShowUploadModal(false);
-              // Auto add uploaded message
-              addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-                serverId: activeServerId,
-                channelId: activeChannelId,
-                userId: user.uid,
-                userName: userName,
-                userAvatar: userAvatar,
-                userBadges: selectedBadges,
-                content: `📤 *Uploaded massive Nitro file:* **${fileName}** (${size}) [Shared securely via SpeechCentor Clouds]`,
-                timestamp: Date.now()
-              });
-              triggerNotification("Supercharged Nitro upload successful!", "success");
-            }, 600);
-            return 100;
-          }
-          return prev + 10;
-        });
-      }, 150);
-    };
-
-    // Attachment Simulator
-    window.clearAttachment = () => {
-      state.simulatedAttachment = null;
-      document.getElementById('attachment-preview-box').classList.add('hidden');
-    };
-
-    window.attachPrebuiltAsset = (url) => {
-      state.simulatedAttachment = url;
-      document.getElementById('attachment-preview-img').src = url;
-      document.getElementById('attachment-preview-box').classList.remove('hidden');
-      toggleImageDropdown();
-    };
-
-    // --- Message Management ---
-    window.handleSendMessage = async (e) => {
-      if (e) e.preventDefault();
-      const inp = document.getElementById('message-text-input');
-      const text = inp.value.trim();
-      const attachedImg = state.simulatedAttachment;
-
-      if (!text && !attachedImg) return;
-      inp.value = '';
-      clearAttachment();
-
-      try {
-        const msgPayload = {
-          serverId: state.activeServerId,
-          channelId: state.activeChannelId,
-          userId: state.user.uid,
-          userName: state.userName,
-          userAvatar: state.userAvatar,
-          userBadges: state.selectedBadges,
-          content: text,
-          imageUrl: attachedImg || null,
-          timestamp: Date.now(),
-          reactions: {}
+        // 2. Firebase configuration object
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMAiYmLy2k5feaWbUHE7n5TUNlZGAr6nk",
+            authDomain: "speechcentor.firebaseapp.com",
+            projectId: "speechcentor",
+            storageBucket: "speechcentor.firebasestorage.app",
+            messagingSenderId: "804696408540",
+            appId: "1:804696408540:web:855cae2217b55dca0a4f19",
+            measurementId: "G-HQ93JH0QCJ"
         };
-        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), msgPayload);
 
-        // Check for AI Ping
-        if (text.toLowerCase().includes('@gemini')) {
-          await triggerGeminiResponse(text);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
+        // 3. Initialize Firebase services
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    const triggerGeminiResponse = async (prompt) => {
-      state.aiLoading = true;
-      renderMessages();
+        // Expose instances to global window for DOM functions
+        window.auth = auth;
+        window.db = db;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.signOut = signOut;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.serverTimestamp = serverTimestamp;
 
-      const cleanedPrompt = prompt.replace(/@gemini/gi, '').trim();
-      let attempts = 0;
-      const maxAttempts = 5;
-      let delay = 1000;
+        // 4. Handle Authentication State (Auth Observer)
+        onAuthStateChanged(auth, (user) => {
+            const authModal = document.getElementById('auth-modal');
+            const appDashboard = document.getElementById('app-dashboard');
 
-      while (attempts < maxAttempts) {
-        try {
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: cleanedPrompt || "Introduce yourself as SpeechCentor Premium AI Assistant!" }] }],
-              systemInstruction: { parts: [{ text: "You are the premium assistant built into SpeechCentor (a Discord alternative). Provide snappy, helpful responses using direct Markdown layouts." }] }
-            })
-          });
+            if (user) {
+                // User is signed in -> Hide modal, show dashboard
+                authModal.classList.add('hidden');
+                appDashboard.classList.remove('hidden');
+                
+                // Set sidebar profile details
+                document.getElementById('nav-user-email').innerText = user.email;
+                document.getElementById('nav-user-avatar').innerText = user.email.charAt(0).toUpperCase();
+                
+                // Start listening to messages once logged in
+                loadMessages();
+            } else {
+                // User is signed out -> Show login modal
+                authModal.classList.remove('hidden');
+                appDashboard.classList.add('hidden');
+            }
+        });
 
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const data = await response.json();
-          const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "SpeechCentor AI core matrix had a temporary interruption! Try again.";
-
-          await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-            serverId: state.activeServerId,
-            channelId: state.activeChannelId,
-            userId: 'gemini-bot',
-            userName: 'SpeechCentor AI ✨',
-            userAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150',
-            content: responseText,
-            timestamp: Date.now(),
-            reactions: {},
-            isAi: true
-          });
-
-          state.aiLoading = false;
-          renderMessages();
-          return;
-        } catch (err) {
-          attempts++;
-          if (attempts >= maxAttempts) {
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-              serverId: state.activeServerId,
-              channelId: state.activeChannelId,
-              userId: 'gemini-bot',
-              userName: 'SpeechCentor AI ✨',
-              userAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150',
-              content: "⚠️ Network latency timed out. Invoke me again in a few seconds!",
-              timestamp: Date.now()
-            });
-            state.aiLoading = false;
-            renderMessages();
-            break;
-          }
-          await new Promise(resolve => setTimeout(resolve, delay));
-          delay *= 2;
-        }
-      }
-    };
-
-    window.toggleMessageReaction = async (msgId, emoji) => {
-      try {
-        const msgRef = doc(db, 'artifacts', appId, 'public', 'data', 'messages', msgId);
-        const snap = await getDoc(msgRef);
-        if (snap.exists()) {
-          const reactions = snap.data().reactions || {};
-          if (!reactions[emoji]) reactions[emoji] = [];
-
-          if (reactions[emoji].includes(state.user.uid)) {
-            reactions[emoji] = reactions[emoji].filter(id => id !== state.user.uid);
-          } else {
-            reactions[emoji].push(state.user.uid);
-          }
-
-          if (reactions[emoji].length === 0) delete reactions[emoji];
-          await updateDoc(msgRef, { reactions });
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    window.deleteMessage = async (msgId) => {
-      try {
-        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'messages', msgId));
-        triggerNotification("Deleted message.", "info");
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    // Emoji Box triggers
-    window.toggleEmojiBox = (msgId = 'input') => {
-      const picker = document.getElementById('input-emoji-picker');
-      picker.classList.toggle('hidden');
-      if (!picker.classList.contains('hidden')) {
-        picker.innerHTML = EMOJIS.map(em => `
-          <button type="button" onclick="insertEmoji('${em}', '${msgId}')" class="hover:scale-125 text-lg p-1 transition">${em}</button>
-        `).join('');
-      }
-    };
-
-    window.insertEmoji = (emoji, msgId) => {
-      if (msgId === 'input') {
-        const inp = document.getElementById('message-text-input');
-        inp.value += emoji;
-        toggleEmojiBox();
-      } else {
-        toggleMessageReaction(msgId, emoji);
-      }
-    };
-
-    // --- Premium Nitro User Profiles Customizer (Firestore Synced) ---
-    window.updateProfilePreview = () => {
-      const name = document.getElementById('profile-input-name').value || "Gamer";
-      const banner = document.getElementById('profile-input-banner-url').value || PRESET_BANNERS[0];
-      const avatar = document.getElementById('profile-input-avatar-url').value || PRESET_AVATARS[0];
-
-      const previewBanner = document.getElementById('profile-preview-banner');
-      const previewAvatar = document.getElementById('profile-preview-avatar');
-
-      previewAvatar.src = avatar;
-      if (banner.startsWith('http') || banner.startsWith('data:image')) {
-        previewBanner.style.background = `url(${banner}) center/cover no-repeat`;
-      } else {
-        previewBanner.style.background = banner;
-      }
-    };
-
-    window.selectPresetBanner = (bVal) => {
-      document.getElementById('profile-input-banner-url').value = bVal;
-      updateProfilePreview();
-    };
-
-    window.selectPresetAvatar = (aVal) => {
-      document.getElementById('profile-input-avatar-url').value = aVal;
-      updateProfilePreview();
-    };
-
-    window.toggleBadgeSelect = (badgeId) => {
-      if (state.selectedBadges.includes(badgeId)) {
-        state.selectedBadges = state.selectedBadges.filter(b => b !== badgeId);
-      } else {
-        state.selectedBadges.push(badgeId);
-      }
-      renderBadgesSelection();
-      updateProfilePreview();
-    };
-
-    const renderBadgesSelection = () => {
-      const container = document.getElementById('badges-selection-group');
-      const badges = [
-        { id: 'nitro', name: '⚡ Nitro' },
-        { id: 'booster', name: '🔮 Booster' },
-        { id: 'early', name: '🛡️ Early Member' },
-        { id: 'dev', name: '👾 Developer' },
-        { id: 'staff', name: '👑 Staff Team' }
-      ];
-
-      container.innerHTML = badges.map(b => {
-        const isSelected = state.selectedBadges.includes(b.id);
-        return `
-          <button type="button" onclick="toggleBadgeSelect('${b.id}')" class="text-xs font-semibold px-3 py-1.5 rounded-full border transition ${
-            isSelected ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-transparent' : 'bg-zinc-900 border-zinc-700 text-gray-400'
-          }">
-            ${b.name}
-          </button>
-        `;
-      }).join('');
-    };
-
-    window.submitSaveProfile = async () => {
-      state.userName = document.getElementById('profile-input-name').value.trim() || 'Anonymous';
-      state.customStatus = document.getElementById('profile-input-status').value.trim() || 'Enjoying Nitro';
-      state.userAvatar = document.getElementById('profile-input-avatar-url').value || PRESET_AVATARS[0];
-      state.customBanner = document.getElementById('profile-input-banner-url').value || PRESET_BANNERS[0];
-
-      closeModal('profile-modal');
-      await updateUserProfilePresence();
-      triggerNotification("Identity synced to cloud database permanently!", "success");
-    };
-
-    const updateUserProfilePresence = async () => {
-      if (!state.user) return;
-      const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', state.user.uid);
-      await setDoc(userDocRef, {
-        id: state.user.uid,
-        name: state.userName,
-        avatar: state.userAvatar,
-        status: 'online',
-        customStatus: state.customStatus,
-        badges: state.selectedBadges,
-        banner: state.customBanner,
-        voiceState: state.currentVoiceChannelId ? { channelId: state.currentVoiceChannelId, isMuted: state.isMuted, isDeafened: state.isDeafened } : null,
-        lastSeen: Date.now()
-      }, { merge: true });
-    };
-
-    // --- Dynamic Themes Engine UI ---
-    window.selectThemePreset = (themeIndex) => {
-      const theme = PRESET_THEMES[themeIndex];
-      state.activeTheme = theme;
-      updateThemeStyles();
-      renderThemeSelector();
-    };
-
-    window.toggleCustomThemeCreator = () => {
-      const box = document.getElementById('custom-theme-creator-box');
-      const toggleTxt = document.getElementById('creator-toggle-text');
-      box.classList.toggle('hidden');
-      if (box.classList.contains('hidden')) {
-        toggleTxt.textContent = "Open Custom Palette Editor";
-      } else {
-        toggleTxt.textContent = "Close Custom Palette Editor";
-      }
-    };
-
-    window.applyCustomInputsTheme = () => {
-      const accent = document.getElementById('picker-accent').value;
-      const chat = document.getElementById('picker-chat').value;
-      const sidebar = document.getElementById('picker-sidebar').value;
-      const text = document.getElementById('picker-text').value;
-
-      document.getElementById('label-accent').textContent = accent;
-      document.getElementById('label-chat').textContent = chat;
-      document.getElementById('label-sidebar').textContent = sidebar;
-      document.getElementById('label-text').textContent = text;
-
-      state.activeTheme = {
-        id: 'custom-created',
-        name: 'Custom Theme 🎨',
-        sidebarBg: sidebar,
-        chatBg: chat,
-        serverBg: '#050505',
-        accentColor: accent,
-        textColor: text,
-        headerBg: sidebar,
-        cardBg: sidebar
-      };
-      updateThemeStyles();
-    };
-
-    const updateThemeStyles = () => {
-      const root = document.documentElement;
-      root.style.setProperty('--sidebar-bg', state.activeTheme.sidebarBg);
-      root.style.setProperty('--chat-bg', state.activeTheme.chatBg);
-      root.style.setProperty('--server-bg', state.activeTheme.serverBg);
-      root.style.setProperty('--accent-color', state.activeTheme.accentColor);
-      root.style.setProperty('--text-color', state.activeTheme.textColor);
-      root.style.setProperty('--header-bg', state.activeTheme.headerBg);
-      root.style.setProperty('--card-bg', state.activeTheme.cardBg);
-
-      // Refresh dynamic visual components
-      const homeBtn = document.getElementById('home-button');
-      if (state.activeServerId === 'home') {
-        homeBtn.style.backgroundColor = state.activeTheme.accentColor;
-      } else {
-        homeBtn.style.backgroundColor = state.activeTheme.sidebarBg;
-      }
-    };
-
-    const renderThemeSelector = () => {
-      const container = document.getElementById('themes-presets-grid');
-      container.innerHTML = PRESET_THEMES.map((t, idx) => {
-        const isSelected = state.activeTheme.id === t.id;
-        return `
-          <button onclick="selectThemePreset(${idx})" class="p-3 rounded text-left border flex flex-col transition ${
-            isSelected ? 'border-pink-500 bg-pink-500/10' : 'border-zinc-800 bg-zinc-800 hover:border-zinc-700'
-          }">
-            <span class="text-xs font-bold text-white mb-1.5">${t.name}</span>
-            <div class="flex gap-1">
-              <span class="w-4 h-4 rounded-full border border-white/10" style="background-color: ${t.serverBg}"></span>
-              <span class="w-4 h-4 rounded-full border border-white/10" style="background-color: ${t.sidebarBg}"></span>
-              <span class="w-4 h-4 rounded-full border border-white/10" style="background-color: ${t.chatBg}"></span>
-              <span class="w-4 h-4 rounded-full border border-white/10" style="background-color: ${t.accentColor}"></span>
-            </div>
-          </button>
-        `;
-      }).join('');
-    };
-
-    // --- Render Routines ---
-
-    const updateNavigationUI = () => {
-      // Manage Indicators
-      const homeInd = document.getElementById('home-indicator');
-      const homeBtn = document.getElementById('home-button');
-      if (state.activeServerId === 'home') {
-        homeInd.className = "absolute left-0 w-1 bg-white rounded-r transition-all duration-300 h-10";
-        homeBtn.style.backgroundColor = state.activeTheme.accentColor;
-      } else {
-        homeInd.className = "absolute left-0 w-1 bg-white rounded-r transition-all duration-300 h-0";
-        homeBtn.style.backgroundColor = state.activeTheme.sidebarBg;
-      }
-
-      // Sync custom names & displays
-      const activeServer = state.servers.find(s => s.id === state.activeServerId);
-      const serverTitle = document.getElementById('active-server-name');
-      const boostingPanel = document.getElementById('server-boosting-panel');
-
-      if (state.activeServerId === 'home') {
-        serverTitle.textContent = "SpeechCentor";
-        boostingPanel.classList.add('hidden');
-      } else if (activeServer) {
-        serverTitle.textContent = activeServer.name;
-        boostingPanel.classList.remove('hidden');
-        document.getElementById('boosts-count-badge').textContent = `${activeServer.boosts || 0} Boosts`;
-      }
-    };
-
-    const renderServers = () => {
-      const container = document.getElementById('servers-container');
-      container.innerHTML = state.servers.map(s => {
-        const isSelected = state.activeServerId === s.id;
-        return `
-          <button onclick="switchServer('${s.id}')" class="relative group w-12 h-12 rounded-3xl flex items-center justify-center text-lg font-bold transition-all duration-300 ${
-            isSelected ? 'rounded-2xl text-white' : 'hover:rounded-2xl text-gray-300 hover:text-white'
-          }" style="background-color: ${isSelected ? state.activeTheme.accentColor : state.activeTheme.sidebarBg}">
-            <div class="absolute left-0 w-1 bg-white rounded-r transition-all duration-300 ${isSelected ? 'h-10' : 'h-0 group-hover:h-5'}"></div>
-            ${s.icon || s.name.slice(0,2)}
-            <div class="absolute left-[80px] scale-0 group-hover:scale-100 bg-black text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-xl transition-all duration-150 origin-left z-50 whitespace-nowrap">
-              ${s.name}
-            </div>
-          </button>
-        `;
-      }).join('');
-    };
-
-    const renderChannels = () => {
-      const container = document.getElementById('channels-list-container');
-      const voiceContainer = document.getElementById('voice-list-container');
-      const channelsLabel = document.getElementById('channels-label-text');
-      const voiceBlock = document.getElementById('voice-channels-block');
-      const addChanBtn = document.getElementById('create-channel-btn');
-
-      if (state.activeServerId === 'home') {
-        channelsLabel.textContent = "Direct Messaging Hub";
-        voiceBlock.classList.add('hidden');
-        addChanBtn.classList.add('hidden');
-
-        // Direct messages mock matching current user logins
-        container.innerHTML = `
-          <button onclick="switchFriendsTab('online')" class="w-full flex items-center gap-3 px-2 py-2 rounded text-white text-sm font-semibold select-none" style="background-color: ${state.activeTheme.accentColor}20">
-            <i data-lucide="users" class="w-5 h-5 text-indigo-300"></i>
-            Friends Status Lounge
-          </button>
-        `;
-        lucide.createIcons();
-        return;
-      }
-
-      addChanBtn.classList.remove('hidden');
-      channelsLabel.textContent = "Text Channels";
-      voiceBlock.classList.remove('hidden');
-
-      const serverChannels = state.channels.filter(c => c.serverId === state.activeServerId);
-      const activeServer = state.servers.find(s => s.id === state.activeServerId);
-
-      // Render Text
-      container.innerHTML = serverChannels.filter(c => c.type === 'text').map(chan => {
-        const isActive = state.activeChannelId === chan.id;
-        const canDelete = state.user && activeServer && activeServer.ownerId === state.user.uid;
-        return `
-          <div class="group relative flex items-center">
-            <button onclick="switchChannel('${chan.id}')" class="flex-1 flex items-center gap-1.5 px-2 py-1.5 rounded text-sm text-left transition duration-150 ${
-              isActive ? 'text-white font-semibold' : 'text-gray-400 hover:text-white'
-            }" style="background-color: ${isActive ? state.activeTheme.accentColor + '25' : 'transparent'}">
-              <i data-lucide="hash" class="w-5 h-5 text-gray-400 flex-shrink-0"></i>
-              <span class="truncate">${chan.name}</span>
-            </button>
-            ${canDelete ? `
-              <button onclick="deleteChannel('${chan.id}')" class="absolute right-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-rose-500 p-1">
-                <i data-lucide="trash" class="w-3.5 h-3.5"></i>
-              </button>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-
-      // Render Voice
-      voiceContainer.innerHTML = serverChannels.filter(c => c.type === 'voice').map(chan => {
-        const isInVoice = state.currentVoiceChannelId === chan.id;
-        const speakers = state.usersOnline.filter(u => u.voiceState && u.voiceState.channelId === chan.id);
-        const canDelete = state.user && activeServer && activeServer.ownerId === state.user.uid;
-
-        return `
-          <div class="space-y-1">
-            <div class="group relative flex items-center">
-              <button onclick="joinVoiceChannel('${chan.id}')" class="flex-1 flex items-center gap-1.5 px-2 py-1.5 rounded text-sm text-left transition duration-150 ${
-                isInVoice ? 'text-[#23a55a] font-semibold bg-emerald-500/10' : 'text-gray-400 hover:text-white'
-              }">
-                <i data-lucide="volume-2" class="w-5 h-5 flex-shrink-0"></i>
-                <span class="truncate flex-1">${chan.name}</span>
-                ${isInVoice ? `<span class="bg-emerald-500 text-white px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wide">Joined</span>` : ''}
-              </button>
-              ${canDelete ? `
-                <button onclick="deleteChannel('${chan.id}')" class="absolute right-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-rose-500 p-1">
-                  <i data-lucide="trash" class="w-3.5 h-3.5"></i>
-                </button>
-              ` : ''}
-            </div>
-
-            ${speakers.length > 0 ? `
-              <div class="pl-6 space-y-1 py-1">
-                ${speakers.map(spk => `
-                  <div class="flex items-center gap-2 py-0.5" onclick="insertMention('${spk.name}')">
-                    <img src="${spk.avatar}" alt="pfp" class="w-6 h-6 rounded-full object-cover ${!spk.voiceState?.isMuted ? 'ring-2 ring-emerald-500' : ''}">
-                    <span class="text-xs text-gray-300 truncate">${spk.name}</span>
-                    ${spk.voiceState?.isMuted ? `<i data-lucide="mic-off" class="w-3 h-3 text-red-500"></i>` : ''}
-                  </div>
-                `).join('')}
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-
-      // Sync active voice panel display
-      const voiceActivePanel = document.getElementById('voice-connection-panel');
-      if (state.currentVoiceChannelId) {
-        const activeVoice = state.channels.find(c => c.id === state.currentVoiceChannelId);
-        if (activeVoice) {
-          voiceActivePanel.classList.remove('hidden');
-          document.getElementById('voice-channel-name-active').textContent = `${activeVoice.name} / ${activeServer?.name || ''}`;
-        }
-      } else {
-        voiceActivePanel.classList.add('hidden');
-      }
-
-      lucide.createIcons();
-    };
-
-    const renderChat = () => {
-      const activeChannel = state.channels.find(c => c.id === state.activeChannelId);
-      const homeWelcome = document.getElementById('home-dashboard-welcome');
-      const messagesContainer = document.getElementById('chat-messages-container');
-      const inputArea = document.getElementById('chat-input-area');
-
-      // Header nodes
-      const headerType = document.getElementById('header-type-icon');
-      const headerTitle = document.getElementById('header-channel-title');
-      const headerTopic = document.getElementById('header-channel-topic');
-      const headerDivider = document.getElementById('header-divider');
-
-      if (state.activeServerId === 'home') {
-        homeWelcome.classList.remove('hidden');
-        messagesContainer.classList.add('hidden');
-        inputArea.classList.add('hidden');
-
-        headerType.setAttribute('data-lucide', 'users');
-        headerTitle.textContent = "Friends Direct Hub";
-        headerTopic.textContent = "";
-        headerDivider.classList.add('hidden');
-        lucide.createIcons();
-        renderFriendsTab();
-        return;
-      }
-
-      homeWelcome.classList.add('hidden');
-      messagesContainer.classList.remove('hidden');
-      inputArea.classList.remove('hidden');
-
-      if (activeChannel) {
-        headerType.setAttribute('data-lucide', 'hash');
-        headerTitle.textContent = activeChannel.name;
-        headerDivider.classList.remove('hidden');
-        headerTopic.textContent = activeChannel.topic || "Nitro 4K Video enabled.";
-      } else {
-        headerTitle.textContent = "Select or Create a Channel";
-        headerTopic.textContent = "";
-        headerDivider.classList.add('hidden');
-      }
-
-      lucide.createIcons();
-      renderMessages();
-    };
-
-    function escapeHTML(str) {
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-
-    const renderMessages = () => {
-      const container = document.getElementById('chat-messages-container');
-      const activeChannel = state.channels.find(c => c.id === state.activeChannelId);
-      if (!activeChannel) {
-        container.innerHTML = "";
-        return;
-      }
-
-      const channelMessages = state.messages.filter(m => m.serverId === state.activeServerId && m.channelId === state.activeChannelId);
-
-      let html = "";
-
-      // Add channel banner if no messages
-      if (channelMessages.length === 0) {
-        html += `
-          <div class="bg-black/25 p-6 rounded-lg border border-white/10 mb-4 select-none animate-in fade-in duration-150">
-            <div class="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center text-white font-extrabold text-2xl mb-4">#</div>
-            <h3 class="text-xl font-bold text-white mb-1">Welcome to #${activeChannel.name}!</h3>
-            <p class="text-xs text-gray-400 mb-3">This is the absolute beginning of your awesome channel feed.</p>
-            <button onclick="simulateAIPrompt()" class="bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white px-3 py-1.5 rounded transition">Try AI Welcomer</button>
-          </div>
-        `;
-      }
-
-      html += channelMessages.map(msg => {
-        const isAi = msg.userId === 'gemini-bot' || msg.isAi;
-        const canDelete = state.user && (msg.userId === state.user.uid || state.servers.find(s => s.id === state.activeServerId)?.ownerId === state.user.uid);
-        
-        // Mentions rendering with golden highlight if mentioned user is ME
-        let hasMentionMe = false;
-        let renderedContent = escapeHTML(msg.content);
-        
-        state.usersOnline.forEach(u => {
-          const mentionTag = `@${u.name}`;
-          if (renderedContent.includes(mentionTag)) {
-            const isMe = state.user && u.id === state.user.uid;
-            if (isMe) hasMentionMe = true;
+        // 5. Load/Listen to Firestore Messages
+        function loadMessages() {
+            const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
             
-            const highlightClass = isMe 
-              ? 'bg-amber-500/30 text-amber-300 font-extrabold px-1 rounded border-b border-amber-400' 
-              : 'bg-[#5865f2]/30 text-indigo-300 font-bold px-1 rounded cursor-pointer hover:bg-[#5865f2]/60';
-              
-            renderedContent = renderedContent.replaceAll(mentionTag, `<span class="${highlightClass}" onclick="insertMention('${u.name}')">${mentionTag}</span>`);
-          }
-        });
+            onSnapshot(q, (snapshot) => {
+                const messagesContainer = document.getElementById('messages-container');
+                messagesContainer.innerHTML = ''; // Clear prior render
+                
+                snapshot.forEach((doc) => {
+                    const msg = doc.data();
+                    
+                    // Create chat message element
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = "flex space-x-4 group hover:bg-[#2b2d31] p-1 rounded transition";
+                    
+                    // Format timestamp if available
+                    let timeString = "Just now";
+                    if (msg.createdAt) {
+                        const date = msg.createdAt.toDate();
+                        timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    }
 
-        // Highlight custom assistance bot mentions too
-        const geminiBotTag = "@SpeechCentor AI ✨";
-        if (renderedContent.includes("@gemini") || renderedContent.includes(geminiBotTag)) {
-          renderedContent = renderedContent.replaceAll("@gemini", `<span class="bg-purple-500/30 text-purple-300 font-bold px-1 rounded">@gemini</span>`);
-          renderedContent = renderedContent.replaceAll(geminiBotTag, `<span class="bg-purple-500/30 text-purple-300 font-bold px-1 rounded">@SpeechCentor AI ✨</span>`);
-        }
-
-        return `
-          <div 
-            key="${msg.id}" 
-            class="relative flex gap-4 group transition-all duration-150 p-2 -mx-2 rounded-lg ${
-              hasMentionMe 
-                ? 'bg-amber-500/5 border-l-4 border-amber-500' 
-                : isAi 
-                  ? 'bg-purple-950/20 border-l-2 border-pink-500' 
-                  : 'hover:bg-black/10'
-            }"
-          >
-            <img 
-              src="${msg.userAvatar || PRESET_AVATARS[0]}" 
-              alt="avatar" 
-              class="w-10 h-10 rounded-full object-cover flex-shrink-0 bg-zinc-800 cursor-pointer" 
-              onerror="this.src='${PRESET_AVATARS[0]}'"
-              onclick="insertMention('${msg.userName}')"
-            >
-            <div class="flex-1 min-w-0">
-              <div class="flex items-baseline gap-2 mb-1">
-                <span class="font-bold text-white hover:underline cursor-pointer truncate text-sm flex items-center gap-1.5" onclick="insertMention('${msg.userName}')">
-                  ${msg.userName}
-                  ${msg.userBadges ? msg.userBadges.map(b => renderBadgeIconMarkup(b)).join('') : ''}
-                </span>
-                ${isAi ? `<span class="bg-indigo-600 text-white text-[9px] font-black uppercase px-1.5 py-0.5 rounded flex items-center gap-0.5 select-none"><i data-lucide="sparkles" class="w-2.5 h-2.5"></i> AI SYSTEM</span>` : ''}
-                <span class="text-[10px] text-gray-400 select-none">
-                  ${new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-
-              <div class="text-sm leading-relaxed whitespace-pre-wrap select-text break-words">
-                ${renderedContent}
-              </div>
-
-              ${msg.imageUrl ? `
-                <div class="mt-3 relative max-w-sm rounded overflow-hidden border border-black/20 shadow-md">
-                  <img src="${msg.imageUrl}" alt="uploaded content" class="max-h-60 object-cover w-full">
-                </div>
-              ` : ''}
-
-              <!-- Reactions Display -->
-              ${msg.reactions && Object.keys(msg.reactions).length > 0 ? `
-                <div class="flex flex-wrap gap-1.5 mt-2">
-                  ${Object.entries(msg.reactions).map(([emoji, list]) => {
-                    const hasReacted = list.includes(state.user?.uid);
-                    return `
-                      <button onclick="toggleMessageReaction('${msg.id}', '${emoji}')" class="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs border transition ${
-                        hasReacted ? 'bg-purple-900/40 border-pink-500 text-white' : 'bg-black/20 border-transparent hover:border-zinc-700 text-gray-300'
-                      }">
-                        <span>${emoji}</span>
-                        <span class="font-bold">${list.length}</span>
-                      </button>
+                    msgDiv.innerHTML = `
+                        <div class="w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center font-bold text-white shrink-0">
+                            ${msg.user ? msg.user.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        <div class="flex flex-col w-full overflow-hidden">
+                            <div class="flex items-baseline space-x-2">
+                                <span class="font-semibold text-white text-sm">${msg.user || 'Anonymous'}</span>
+                                <span class="text-[10px] text-gray-400">${timeString}</span>
+                            </div>
+                            <p class="text-[#dbdee1] text-sm break-words mt-0.5">${escapeHTML(msg.text)}</p>
+                        </div>
                     `;
-                  }).join('')}
-                </div>
-              ` : ''}
-            </div>
-
-            <!-- Operations panel on hover -->
-            <div class="opacity-0 group-hover:opacity-100 absolute right-4 translate-y-[-18px] bg-zinc-900 border border-zinc-800 shadow-lg rounded-lg flex items-center p-0.5 transition duration-150 z-10">
-              <button onclick="toggleEmojiBox('${msg.id}')" class="p-1.5 hover:bg-zinc-800 text-gray-400 hover:text-white rounded" title="React">
-                <i data-lucide="smile" class="w-4.5 h-4.5"></i>
-              </button>
-              ${canDelete ? `
-                <button onclick="deleteMessage('${msg.id}')" class="p-1.5 hover:bg-zinc-800 text-gray-400 hover:text-rose-500 rounded" title="Delete">
-                  <i data-lucide="trash" class="w-4.5 h-4.5"></i>
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      if (state.aiLoading) {
-        html += `
-          <div class="flex gap-4 p-2 bg-indigo-950/10 border-l-2 border-indigo-400 animate-pulse rounded-lg select-none">
-            <div class="w-10 h-10 rounded-full bg-indigo-900/50 flex items-center justify-center text-white">⚡</div>
-            <div class="flex-1 py-1">
-              <div class="text-sm font-bold text-indigo-300">SpeechCentor AI is typing...</div>
-              <div class="h-2 bg-zinc-700 rounded mt-2 w-1/2"></div>
-            </div>
-          </div>
-        `;
-      }
-
-      container.innerHTML = html;
-      lucide.createIcons();
-      container.scrollTop = container.scrollHeight;
-    };
-
-    window.simulateAIPrompt = () => {
-      const inp = document.getElementById('message-text-input');
-      inp.value = "@gemini Write a welcoming note to the SpeechCentor lounge!";
-      inp.focus();
-    };
-
-    const renderMembers = () => {
-      const container = document.getElementById('members-container-list');
-      if (!container) return;
-
-      container.innerHTML = state.usersOnline.map(u => {
-        const isMuted = u.voiceState?.isMuted;
-        const isFriend = state.friends.some(f => f.uid === u.id);
-        
-        return `
-          <div class="flex items-center gap-2.5 p-1 rounded hover:bg-black/10 transition group cursor-pointer" onclick="insertMention('${u.name}')">
-            <div class="relative">
-              <img src="${u.avatar}" alt="pfp" class="w-8 h-8 rounded-full object-cover" onerror="this.src='${PRESET_AVATARS[0]}'">
-              <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-zinc-800"></div>
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold text-white group-hover:text-pink-400 truncate flex items-center gap-1">
-                ${u.name}
-                ${u.badges ? u.badges.map(b => renderBadgeIconMarkup(b)).join('') : ''}
-              </div>
-              <div class="text-[10px] text-gray-400 truncate flex items-center gap-1">
-                ${isFriend ? `<i data-lucide="users" class="w-3 h-3 text-pink-400"></i>` : ''}
-                <span>${u.customStatus || 'SpeechCentor Gold'}</span>
-              </div>
-            </div>
-            ${isMuted ? `<i data-lucide="mic-off" class="w-3.5 h-3.5 text-rose-500 flex-shrink-0"></i>` : ''}
-          </div>
-        `;
-      }).join('');
-      lucide.createIcons();
-    };
-
-    const renderUserProfileBar = () => {
-      document.getElementById('user-avatar-img').src = state.userAvatar;
-      document.getElementById('user-display-name').textContent = state.userName || 'Anonymous';
-      document.getElementById('user-custom-status').textContent = state.customStatus;
-
-      const badgeContainer = document.getElementById('user-badges-container');
-      badgeContainer.innerHTML = state.selectedBadges.map(b => renderBadgeIconMarkup(b)).join('');
-    };
-
-    const renderBadgeIconMarkup = (badge) => {
-      switch (badge) {
-        case 'nitro': return `<span title="SpeechCentor Nitro" class="cursor-help text-purple-400 font-bold text-xs select-none">⚡</span>`;
-        case 'booster': return `<span title="Server Booster" class="cursor-help text-pink-400 font-bold text-xs select-none">🔮</span>`;
-        case 'early': return `<span title="Early Supporter" class="cursor-help text-blue-400 font-bold text-xs select-none">🛡️</span>`;
-        case 'dev': return `<span title="Verified Developer" class="cursor-help text-emerald-400 font-bold text-xs select-none">👾</span>`;
-        case 'staff': return `<span title="SpeechCentor Staff" class="cursor-help text-rose-500 font-bold text-xs select-none">👑</span>`;
-        default: return '';
-      }
-    };
-
-    // --- Init & Presence loop ---
-    const initAppLoop = () => {
-      // Setup default theme
-      updateThemeStyles();
-      renderThemeSelector();
-
-      // Render preset config options in Profile Modal
-      const bannersContainer = document.getElementById('preset-banners-grid');
-      bannersContainer.innerHTML = PRESET_BANNERS.map(b => `
-        <button type="button" onclick="selectPresetBanner('${b}')" class="h-10 rounded border border-zinc-700 transition" style="background: ${
-          b.startsWith('http') || b.startsWith('data:image') ? `url(${b}) center/cover no-repeat` : b
-        }"></button>
-      `).join('');
-
-      const avatarsContainer = document.getElementById('preset-avatars-flex');
-      avatarsContainer.innerHTML = PRESET_AVATARS.map(a => `
-        <button type="button" onclick="selectPresetAvatar('${a}')" class="w-11 h-11 rounded-full overflow-hidden transition hover:scale-105">
-          <img src="${a}" alt="preset" class="w-full h-full object-cover">
-        </button>
-      `).join('');
-
-      renderBadgesSelection();
-    };
-
-    // --- Auth & Sync Handlers ---
-    onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        state.user = firebaseUser;
-
-        // Restore Profile or generate defaults
-        try {
-          const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', firebaseUser.uid);
-          const userSnap = await getDoc(userDocRef);
-          if (userSnap.exists()) {
-            const data = userSnap.data();
-            state.userName = data.name || `Gamer#${Math.floor(1000 + Math.random() * 9000)}`;
-            state.userAvatar = data.avatar || PRESET_AVATARS[0];
-            state.customStatus = data.customStatus || 'Enjoying Free SpeechCentor Nitro 💎';
-            state.customBanner = data.banner || PRESET_BANNERS[0];
-            if (data.badges) state.selectedBadges = data.badges;
-          } else {
-            state.userName = `Gamer#${Math.floor(1000 + Math.random() * 9000)}`;
-          }
-        } catch (e) {
-          console.error(e);
-          state.userName = `Gamer#${Math.floor(1000 + Math.random() * 9000)}`;
+                    messagesContainer.appendChild(msgDiv);
+                });
+                // Scroll window to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
         }
 
-        renderUserProfileBar();
-        await updateUserProfilePresence();
-        initSyncs();
-        initFriendsSync();
-      }
-    });
-
-    const initFriendsSync = () => {
-      if (!state.user) return;
-      // Realtime private Friends list collection subscription following Rule 1 & Rule 3
-      const friendsQuery = collection(db, 'artifacts', appId, 'users', state.user.uid, 'friends');
-      onSnapshot(friendsQuery, (snapshot) => {
-        const fList = [];
-        snapshot.forEach(doc => {
-          fList.push({ id: doc.id, ...doc.data() });
-        });
-        state.friends = fList;
-        renderFriendsTab();
-        renderMembers(); // Refresh friends icons in member lists
-      }, (err) => console.error("Friends sync error: ", err));
-    };
-
-    const initSyncs = () => {
-      // 1. Sync Servers
-      const serversQuery = collection(db, 'artifacts', appId, 'public', 'data', 'servers');
-      onSnapshot(serversQuery, (snapshot) => {
-        const sList = [];
-        snapshot.forEach(doc => sList.push({ id: doc.id, ...doc.data() }));
-        state.servers = sList;
-
-        if (state.servers.length === 0) {
-          seedDefaultData();
-        } else {
-          renderServers();
-          updateNavigationUI();
+        // Helper function to prevent XSS
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
         }
-      });
+    </script>
 
-      // 2. Sync Channels
-      const channelsQuery = collection(db, 'artifacts', appId, 'public', 'data', 'channels');
-      onSnapshot(channelsQuery, (snapshot) => {
-        const cList = [];
-        snapshot.forEach(doc => cList.push({ id: doc.id, ...doc.data() }));
-        state.channels = cList;
+    <script>
+        let isSignUp = false;
 
-        // Auto select first text channel
-        if (state.activeServerId !== 'home') {
-          const serverChannels = state.channels.filter(c => c.serverId === state.activeServerId && c.type === 'text');
-          if (serverChannels.length > 0 && !state.activeChannelId) {
-            state.activeChannelId = serverChannels[0].id;
-          }
+        // Toggle authentication modes
+        function toggleAuthMode() {
+            isSignUp = !isSignUp;
+            const title = document.getElementById('auth-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const switchText = document.getElementById('auth-switch-text');
+            const switchBtn = document.getElementById('auth-switch-btn');
+            const errDiv = document.getElementById('auth-error');
+
+            errDiv.classList.add('hidden');
+
+            if (isSignUp) {
+                title.innerText = "Create an account";
+                submitBtn.innerText = "Register";
+                switchText.innerText = "Already have an account?";
+                switchBtn.innerText = "Log In";
+            } else {
+                title.innerText = "Welcome back!";
+                submitBtn.innerText = "Log In";
+                switchText.innerText = "Need an account?";
+                switchBtn.innerText = "Register";
+            }
         }
 
-        renderChannels();
-        renderChat();
-      });
+        // Processing Login/Signup via Firebase SDK
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const errDiv = document.getElementById('auth-error');
+            errDiv.classList.add('hidden');
 
-      // 3. Sync Messages
-      const messagesQuery = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
-      onSnapshot(messagesQuery, (snapshot) => {
-        const mList = [];
-        snapshot.forEach(doc => mList.push({ id: doc.id, ...doc.data() }));
-        mList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-        state.messages = mList;
-        renderMessages();
-      });
-
-      // 4. Sync Online Users
-      const usersQuery = collection(db, 'artifacts', appId, 'public', 'data', 'users');
-      onSnapshot(usersQuery, (snapshot) => {
-        const uList = [];
-        snapshot.forEach(doc => {
-          const u = doc.data();
-          if (Date.now() - (u.lastSeen || 0) < 45000) {
-            uList.push(u);
-          }
-        });
-        state.usersOnline = uList;
-        renderMembers();
-        renderChannels(); // Dynamic voice user updates
-        renderFriendsTab(); // Refresh active dashboard users
-      });
-    };
-
-    const seedDefaultData = async () => {
-      try {
-        const sRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'servers'));
-        await setDoc(sRef, {
-          name: "SpeechCentor Lounge",
-          icon: "💎",
-          ownerId: "system",
-          description: "Official welcome lounge for all builders! Enjoy premium free themes & sounds.",
-          boosts: 12
-        });
-
-        const textChanRef1 = doc(collection(db, 'artifacts', appId, 'public', 'data', 'channels'));
-        await setDoc(textChanRef1, {
-          serverId: sRef.id,
-          name: "welcome-nitro",
-          type: "text",
-          topic: "Unlock free themes, custom profile badges, and real-time synthesized soundboards!"
-        });
-
-        const textChanRef2 = doc(collection(db, 'artifacts', appId, 'public', 'data', 'channels'));
-        await setDoc(textChanRef2, {
-          serverId: sRef.id,
-          name: "lounge-chat",
-          type: "text",
-          topic: "Vibe, boost the server, and chat with AI."
-        });
-
-        const voiceChanRef1 = doc(collection(db, 'artifacts', appId, 'public', 'data', 'channels'));
-        await setDoc(voiceChanRef1, {
-          serverId: sRef.id,
-          name: "Premium Hi-Fi 320kbps",
-          type: "volume-2"
-        });
-
-        // Add Welcome Message
-        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
-          serverId: sRef.id,
-          channelId: textChanRef1.id,
-          userId: 'system',
-          userName: 'SpeechCentor Staff 🛡️',
-          userAvatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150',
-          content: "Welcome to SpeechCentor! 🎉 We noticed you requested the ultimate premium Nitro features. Look at the bottom user bar or the top right headers! You can change premium themes, use custom soundboards, boost servers with confetti, and upload massive mock files - absolutely free!",
-          timestamp: Date.now(),
-          reactions: {}
-        });
-
-        triggerNotification("Created default SpeechCentor Hub!", "success");
-      } catch (e) {
-        console.error("Error Seeding default:", e);
-      }
-    };
-
-    // --- Start trigger ---
-    window.onload = async () => {
-      initAppLoop();
-
-      // Trigger Auth sign-in
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+            try {
+                if (isSignUp) {
+                    await createUserWithEmailAndPassword(window.auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(window.auth, email, password);
+                }
+            } catch (error) {
+                errDiv.innerText = error.message.replace("Firebase: ", "");
+                errDiv.classList.remove('hidden');
+            }
         }
-      } catch (err) {
-        console.error("Auth Setup Error", err);
-        await signInAnonymously(auth);
-      }
-    };
-  </script>
+
+        // Logout user
+        async function logoutUser() {
+            try {
+                await signOut(window.auth);
+            } catch (error) {
+                console.error("Signout error:", error);
+            }
+        }
+
+        // Send a message to Firestore
+        async function sendMessage(e) {
+            e.preventDefault();
+            const inputVal = document.getElementById('message-input').value.trim();
+            if (!inputVal || !window.auth.currentUser) return;
+
+            try {
+                await addDoc(collection(window.db, "messages"), {
+                    text: inputVal,
+                    user: window.auth.currentUser.email,
+                    uid: window.auth.currentUser.uid,
+                    createdAt: window.serverTimestamp()
+                });
+                document.getElementById('message-input').value = ''; // Clear input
+            } catch (error) {
+                console.error("Error adding document: ", error);
+            }
+        }
+    </script>
 </body>
 </html>
