@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Clone with Firebase</title>
+    <title>Discord Clone with Firebase - Profile Manager</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
     <style>
         .discord-dark {
             background-color: #313338;
@@ -14,6 +16,10 @@
         .discord-channels { background-color: #2b2d31; }
         .discord-chat { background-color: #313338; }
         .discord-user-bar { background-color: #232428; }
+        /* Image Cropper container */
+        #cropper-container { max-height: 300px; }
+        .cropper-view-box, .cropper-face { border-radius: 50%; } /* Circle crop for PFP */
+        .cropper-banner .cropper-view-box, .cropper-banner .cropper-face { border-radius: 0; } /* Rectangle for Banner */
     </style>
 </head>
 <body class="h-screen w-screen overflow-hidden font-sans">
@@ -85,8 +91,8 @@
             </div>
 
             <div class="discord-user-bar h-14 flex items-center justify-between px-2">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center font-bold text-white text-xs" id="nav-user-avatar">U</div>
+                <div class="flex items-center space-x-2 cursor-pointer hover:bg-[#35373c] p-1.5 rounded w-[70%]" onclick="openProfileModal()">
+                    <img id="nav-user-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=Fallback" class="w-8 h-8 rounded-full bg-[#5865F2] object-cover shrink-0" alt="PFP">
                     <div class="flex flex-col overflow-hidden">
                         <span class="text-white text-sm font-semibold truncate w-24" id="nav-user-email">User</span>
                         <span class="text-xs text-[#4e5058]">Online</span>
@@ -105,8 +111,7 @@
                 <span class="text-gray-400 text-sm border-l border-gray-700 pl-3 ml-2">Welcome to the general chat!</span>
             </div>
 
-            <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4">
-                </div>
+            <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
 
             <div class="p-4 pt-0">
                 <form id="message-form" onsubmit="sendMessage(event)" class="bg-[#383a40] rounded-lg p-2.5 flex items-center space-x-3">
@@ -116,30 +121,64 @@
                 </form>
             </div>
         </div>
+    </div>
 
+    <div id="profile-modal" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-xs">
+        <div class="bg-[#313338] rounded-lg shadow-2xl w-[600px] border border-[#232428] overflow-hidden">
+            <div id="profile-banner-preview" class="h-32 bg-indigo-600 relative bg-cover bg-center flex items-end p-4">
+                <label class="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white text-xs p-2 rounded cursor-pointer flex items-center space-x-1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <span>Edit Banner</span>
+                    <input type="file" accept="image/*" class="hidden" onchange="prepareCrop(event, 'banner')">
+                </label>
+                <div class="w-20 h-20 rounded-full border-4 border-[#313338] bg-[#1e1f22] overflow-hidden relative group translate-y-6 ml-2">
+                    <img id="profile-pfp-preview" src="https://api.dicebear.com/7.x/bottts/svg?seed=Fallback" class="w-full h-full object-cover" alt="Profile">
+                    <label class="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-[10px] opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                        Change
+                        <input type="file" accept="image/*" class="hidden" onchange="prepareCrop(event, 'pfp')">
+                    </label>
+                </div>
+            </div>
+
+            <div class="p-6 pt-10 space-y-4">
+                <div>
+                    <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Account Email</span>
+                    <p id="profile-email-display" class="text-white font-medium mt-1">user@email.com</p>
+                </div>
+                <div>
+                    <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider">User ID</span>
+                    <p id="profile-uid-display" class="text-gray-400 text-sm font-mono mt-1 bg-[#1e1f22] p-2 rounded select-all truncate">XYZ-HASH-123</p>
+                </div>
+                <div>
+                    <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Image Address Link</span>
+                    <input type="text" id="profile-img-link" readonly class="w-full bg-[#1e1f22] text-gray-400 font-mono text-xs p-2 rounded mt-1 border border-[#111214] select-all" placeholder="Base64 Image Address will show up here upon updating...">
+                </div>
+            </div>
+
+            <div class="bg-[#2b2d31] px-6 py-4 flex justify-end space-x-3">
+                <button onclick="closeProfileModal()" class="text-white hover:bg-gray-700 px-4 py-2 rounded text-sm transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cropper-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/80">
+        <div class="bg-[#313338] p-6 rounded-lg w-[500px] border border-[#232428]">
+            <h3 class="text-white font-bold mb-4 text-center">Crop Image</h3>
+            <div id="cropper-container" class="overflow-hidden bg-[#1e1f22] rounded flex justify-center items-center">
+                <img id="cropper-image" src="" class="max-h-[300px]">
+            </div>
+            <div class="flex justify-between mt-6">
+                <button onclick="cancelCrop()" class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded text-sm">Cancel</button>
+                <button onclick="performCrop()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded text-sm">Crop & Save</button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
-        // 1. Import Firebase SDK dependencies
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-        import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            signOut, 
-            onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            query, 
-            orderBy, 
-            onSnapshot, 
-            serverTimestamp 
-        } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-        // 2. Firebase configuration object
         const firebaseConfig = {
             apiKey: "AIzaSyAMAiYmLy2k5feaWbUHE7n5TUNlZGAr6nk",
             authDomain: "speechcentor.firebaseapp.com",
@@ -150,12 +189,10 @@
             measurementId: "G-HQ93JH0QCJ"
         };
 
-        // 3. Initialize Firebase services
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Expose instances to global window for DOM functions
         window.auth = auth;
         window.db = db;
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
@@ -164,56 +201,79 @@
         window.collection = collection;
         window.addDoc = addDoc;
         window.serverTimestamp = serverTimestamp;
+        window.doc = doc;
+        window.getDoc = getDoc;
+        window.setDoc = setDoc;
 
-        // 4. Handle Authentication State (Auth Observer)
-        onAuthStateChanged(auth, (user) => {
+        // Auth State Observer
+        onAuthStateChanged(auth, async (user) => {
             const authModal = document.getElementById('auth-modal');
             const appDashboard = document.getElementById('app-dashboard');
 
             if (user) {
-                // User is signed in -> Hide modal, show dashboard
                 authModal.classList.add('hidden');
                 appDashboard.classList.remove('hidden');
                 
-                // Set sidebar profile details
-                document.getElementById('nav-user-email').innerText = user.email;
-                document.getElementById('nav-user-avatar').innerText = user.email.charAt(0).toUpperCase();
-                
-                // Start listening to messages once logged in
+                // Fetch existing profile data (pfp/banner) from Firestore
+                await fetchProfileData(user.uid);
                 loadMessages();
             } else {
-                // User is signed out -> Show login modal
                 authModal.classList.remove('hidden');
                 appDashboard.classList.add('hidden');
             }
         });
 
-        // 5. Load/Listen to Firestore Messages
+        // Load logged in user profile from Firestore
+        async function fetchProfileData(uid) {
+            try {
+                const userDoc = await getDoc(doc(db, "users", uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    if (data.pfp) {
+                        document.getElementById('nav-user-img').src = data.pfp;
+                        document.getElementById('profile-pfp-preview').src = data.pfp;
+                    }
+                    if (data.banner) {
+                        document.getElementById('profile-banner-preview').style.backgroundImage = `url('${data.banner}')`;
+                    }
+                } else {
+                    // Create basic document if doesn't exist yet
+                    await setDoc(doc(db, "users", uid), {
+                        pfp: "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid,
+                        banner: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=800"
+                    });
+                    document.getElementById('nav-user-img').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
+                    document.getElementById('profile-pfp-preview').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
+                }
+            } catch(e) {
+                console.log("Error obtaining user account details", e);
+            }
+            
+            // Set nav drawer profile
+            document.getElementById('nav-user-email').innerText = auth.currentUser.email;
+        }
+        window.fetchProfileData = fetchProfileData;
+
+        // Load Chat messages engine
         function loadMessages() {
             const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
-            
             onSnapshot(q, (snapshot) => {
                 const messagesContainer = document.getElementById('messages-container');
-                messagesContainer.innerHTML = ''; // Clear prior render
-                
+                messagesContainer.innerHTML = ''; 
                 snapshot.forEach((doc) => {
                     const msg = doc.data();
-                    
-                    // Create chat message element
                     const msgDiv = document.createElement('div');
                     msgDiv.className = "flex space-x-4 group hover:bg-[#2b2d31] p-1 rounded transition";
                     
-                    // Format timestamp if available
                     let timeString = "Just now";
                     if (msg.createdAt) {
                         const date = msg.createdAt.toDate();
                         timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     }
 
+                    // Append dynamically fetched user PFP to message entries
                     msgDiv.innerHTML = `
-                        <div class="w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center font-bold text-white shrink-0">
-                            ${msg.user ? msg.user.charAt(0).toUpperCase() : 'U'}
-                        </div>
+                        <img src="${msg.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback'}" class="w-10 h-10 rounded-full bg-[#5865F2] object-cover shrink-0">
                         <div class="flex flex-col w-full overflow-hidden">
                             <div class="flex items-baseline space-x-2">
                                 <span class="font-semibold text-white text-sm">${msg.user || 'Anonymous'}</span>
@@ -224,23 +284,20 @@
                     `;
                     messagesContainer.appendChild(msgDiv);
                 });
-                // Scroll window to bottom
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             });
         }
 
-        // Helper function to prevent XSS
         function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         }
     </script>
 
     <script>
         let isSignUp = false;
+        let cropper = null;
+        let activeCropTarget = null; // "pfp" or "banner"
 
-        // Toggle authentication modes
         function toggleAuthMode() {
             isSignUp = !isSignUp;
             const title = document.getElementById('auth-title');
@@ -248,7 +305,6 @@
             const switchText = document.getElementById('auth-switch-text');
             const switchBtn = document.getElementById('auth-switch-btn');
             const errDiv = document.getElementById('auth-error');
-
             errDiv.classList.add('hidden');
 
             if (isSignUp) {
@@ -264,7 +320,6 @@
             }
         }
 
-        // Processing Login/Signup via Firebase SDK
         async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('auth-email').value;
@@ -284,7 +339,6 @@
             }
         }
 
-        // Logout user
         async function logoutUser() {
             try {
                 await signOut(window.auth);
@@ -293,22 +347,116 @@
             }
         }
 
-        // Send a message to Firestore
         async function sendMessage(e) {
             e.preventDefault();
             const inputVal = document.getElementById('message-input').value.trim();
             if (!inputVal || !window.auth.currentUser) return;
 
             try {
+                // Fetch dynamic pfp data attached dynamically to chat doc
+                let userPfp = document.getElementById('nav-user-img').src;
                 await addDoc(collection(window.db, "messages"), {
                     text: inputVal,
                     user: window.auth.currentUser.email,
                     uid: window.auth.currentUser.uid,
+                    pfp: userPfp,
                     createdAt: window.serverTimestamp()
                 });
-                document.getElementById('message-input').value = ''; // Clear input
+                document.getElementById('message-input').value = ''; 
             } catch (error) {
                 console.error("Error adding document: ", error);
+            }
+        }
+
+        // ================= PROFILE MANAGING ENGINE =================
+
+        function openProfileModal() {
+            const user = window.auth.currentUser;
+            if (!user) return;
+            
+            document.getElementById('profile-email-display').innerText = user.email;
+            document.getElementById('profile-uid-display').innerText = user.uid;
+            
+            // Empty data link field initially 
+            document.getElementById('profile-img-link').value = "";
+            
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
+        // Processing Image uploads, preparing cropping box
+        function prepareCrop(event, targetType) {
+            const file = event.target.files[0];
+            if (!file) return;
+            activeCropTarget = targetType;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const cropperImage = document.getElementById('cropper-image');
+                cropperImage.src = e.target.result;
+                
+                // Set container ratio dynamically based on Banner vs PFP requirements
+                const container = document.getElementById('cropper-container');
+                if (targetType === 'pfp') {
+                    container.className = "cropper-pfp max-h-[300px] overflow-hidden";
+                } else {
+                    container.className = "cropper-banner max-h-[300px] overflow-hidden";
+                }
+
+                document.getElementById('cropper-modal').classList.remove('hidden');
+
+                // Initialize Cropper JS instance
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: targetType === 'pfp' ? 1 : 16/9, // 1:1 for Profile pic, 16:9 for banners
+                    viewMode: 1,
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelCrop() {
+            document.getElementById('cropper-modal').classList.add('hidden');
+            if (cropper) cropper.destroy();
+        }
+
+        // Crop image, convert to data url (image address base64 link), and upload to store
+        async function performCrop() {
+            if (!cropper) return;
+            const user = window.auth.currentUser;
+            if (!user) return;
+
+            // Crop configuration output -> Data URI scheme
+            const croppedCanvas = cropper.getCroppedCanvas({
+                width: activeCropTarget === 'pfp' ? 200 : 800,
+                height: activeCropTarget === 'pfp' ? 200 : 450,
+            });
+            
+            const dataURL = croppedCanvas.toDataURL(); // Data Image Address Link
+
+            try {
+                // Update Firestore Profile collection
+                const userRef = window.doc(window.db, "users", user.uid);
+                if (activeCropTarget === 'pfp') {
+                    await window.setDoc(userRef, { pfp: dataURL }, { merge: true });
+                    document.getElementById('nav-user-img').src = dataURL;
+                    document.getElementById('profile-pfp-preview').src = dataURL;
+                    document.getElementById('profile-img-link').value = dataURL;
+                } else {
+                    await window.setDoc(userRef, { banner: dataURL }, { merge: true });
+                    document.getElementById('profile-banner-preview').style.backgroundImage = `url('${dataURL}')`;
+                    document.getElementById('profile-img-link').value = dataURL;
+                }
+                
+                alert("Profile asset updated & linked!");
+                document.getElementById('cropper-modal').classList.add('hidden');
+                cropper.destroy();
+            } catch(e) {
+                console.log("Error during asset upload", e);
+                alert("Failed to update.");
             }
         }
     </script>
