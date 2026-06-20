@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Clone - Full Social & Server Suite Edition</title>
+    <title>Speechcentor - Unique Handles & Advanced Social Suite</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
@@ -24,7 +24,7 @@
     <div id="auth-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-[#313338]">
         <div class="bg-[#313338] p-8 rounded-lg shadow-2xl w-[480px] border border-[#232428]">
             <div class="text-center mb-6">
-                <h2 id="auth-title" class="text-2xl font-bold text-white mb-2">Welcome back!</h2>
+                <h2 id="auth-title" class="text-2xl font-bold text-white mb-2">Welcome back to Speechcentor!</h2>
                 <p class="text-gray-400 text-sm">We're so excited to see you again!</p>
             </div>
 
@@ -55,7 +55,7 @@
         
         <div class="discord-servers w-[72px] flex flex-col items-center py-3 space-y-2 shrink-0 overflow-y-auto">
             <div onclick="selectServer('home')" class="w-12 h-12 rounded-3xl bg-[#313338] hover:rounded-2xl hover:bg-[#5865F2] flex items-center justify-center cursor-pointer transition-all duration-200 text-white font-bold border-2 border-transparent hover:border-[#5865F2]" title="Direct Messages / Home">
-                DC
+                SC
             </div>
             <div class="w-8 h-[2px] bg-[#35363c] rounded"></div>
             
@@ -129,10 +129,10 @@
 
                 <div id="tab-add-friend" class="hidden space-y-4 max-w-lg">
                     <h3 class="text-white font-bold text-lg">Add Friend</h3>
-                    <p class="text-gray-400 text-sm">You can add a friend with their Firebase User ID.</p>
+                    <p class="text-gray-400 text-sm">Add a friend using their User ID or unique @ handle (e.g., @myusername).</p>
                     <div class="bg-[#1e1f22] p-3 rounded-lg flex items-center space-x-3 border border-[#111214]">
-                        <input type="text" id="add-friend-uid-input" placeholder="Enter User ID (e.g., u_8f39a...)" class="flex-1 bg-transparent text-white text-sm focus:outline-none">
-                        <button onclick="submitAddFriend()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-1.5 rounded text-sm font-medium transition">Send Friend Request</button>
+                        <input type="text" id="add-friend-uid-input" placeholder="User ID or Handle (e.g., u_8f39a or @username)" class="flex-1 bg-transparent text-white text-sm focus:outline-none">
+                        <button onclick="submitAddFriend()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-1.5 rounded text-sm font-medium transition">Send Request</button>
                     </div>
                     <div id="add-friend-feedback" class="text-xs font-medium"></div>
                 </div>
@@ -176,6 +176,7 @@
             </div>
 
             <div class="p-6 pt-10 space-y-4">
+                <div id="profile-edit-error" class="hidden p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded"></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Display Name</span>
@@ -407,7 +408,7 @@
             }
         });
 
-        // Initialize / Pull active profile data + auto-generate UserID handles
+        // Initialize / Pull active profile data + generate ID and Unique Handle
         async function fetchProfileData(uid) {
             try {
                 const userDoc = await getDoc(doc(db, "users", uid));
@@ -420,35 +421,68 @@
                     if (data.banner) {
                         document.getElementById('profile-banner-preview').style.backgroundImage = `url('${data.banner}')`;
                     }
-                    document.getElementById('nav-user-displayname').innerText = data.displayName || "Discord User";
+                    document.getElementById('nav-user-displayname').innerText = data.displayName || "Speechcentor User";
                     document.getElementById('nav-user-handle').innerText = "@" + (data.handle || "user");
                     document.getElementById('profile-user-id').value = data.userId || "u_" + uid.substring(0, 8);
 
-                    if(!data.userId) {
+                    if(!data.userId || !data.handle) {
                         const generatedId = "u_" + uid.substring(0, 8);
-                        await setDoc(doc(db, "users", uid), { userId: generatedId }, { merge: true });
+                        let baseHandle = "user_" + uid.substring(0, 4);
+                        
+                        // Enforce uniqueness on first-time generation
+                        let finalHandle = await getUniqueHandle(baseHandle);
+
+                        await setDoc(doc(db, "users", uid), { 
+                            userId: generatedId,
+                            handle: finalHandle,
+                            displayName: data.displayName || "Speechcentor User"
+                        }, { merge: true });
+
                         document.getElementById('profile-user-id').value = generatedId;
+                        document.getElementById('nav-user-handle').innerText = "@" + finalHandle;
                     }
                 } else {
                     const generatedId = "u_" + uid.substring(0, 8);
+                    let baseHandle = "user_" + uid.substring(0, 4);
+                    let finalHandle = await getUniqueHandle(baseHandle);
+
                     await setDoc(doc(db, "users", uid), {
                         pfp: "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid,
                         banner: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=800",
-                        displayName: "Discord User",
-                        handle: "user_" + uid.substring(0,4),
+                        displayName: "Speechcentor User",
+                        handle: finalHandle,
                         userId: generatedId
                     });
-                    document.getElementById('nav-user-img').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
-                    document.getElementById('profile-pfp-preview').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
+                    document.getElementById('nav-user-img').src = "https://api.dicebear.com/7.x/bottts/svg?seed= uid";
+                    document.getElementById('profile-pfp-preview').src = "https://api.dicebear.com/7.x/bottts/svg?seed= uid";
                     document.getElementById('profile-user-id').value = generatedId;
-                    document.getElementById('nav-user-displayname').innerText = "Discord User";
-                    document.getElementById('nav-user-handle').innerText = "@user_" + uid.substring(0,4);
+                    document.getElementById('nav-user-displayname').innerText = "Speechcentor User";
+                    document.getElementById('nav-user-handle').innerText = "@" + finalHandle;
                 }
             } catch(e) {
                 console.log("Error obtaining user account details", e);
             }
         }
         window.fetchProfileData = fetchProfileData;
+
+        // Ensure unique handle across Firestore users directory
+        async function getUniqueHandle(preferredHandle) {
+            let counter = 1;
+            let currentHandle = preferredHandle;
+            
+            while (true) {
+                const q = query(collection(db, "users"), where("handle", "==", currentHandle));
+                const snap = await getDocs(q);
+                
+                if (snap.empty) {
+                    return currentHandle;
+                } else {
+                    currentHandle = `${preferredHandle}${counter}`;
+                    counter++;
+                }
+            }
+        }
+        window.getUniqueHandle = getUniqueHandle;
 
         // Listen to Servers joined
         function startListeningServers(uid) {
@@ -483,7 +517,6 @@
 
                 for (const d of docs) {
                     const fData = d.data();
-                    // Obtain current snapshot states via reference profiles
                     const refDoc = await getDoc(doc(db, "users", fData.friendUid));
                     const fullUserObj = refDoc.exists() ? refDoc.data() : {};
 
@@ -575,12 +608,12 @@
             errDiv.classList.add('hidden');
 
             if (isSignUp) {
-                title.innerText = "Create an account";
+                title.innerText = "Create an account on Speechcentor";
                 submitBtn.innerText = "Register";
                 switchText.innerText = "Already have an account?";
                 switchBtn.innerText = "Log In";
             } else {
-                title.innerText = "Welcome back!";
+                title.innerText = "Welcome back to Speechcentor!";
                 submitBtn.innerText = "Log In";
                 switchText.innerText = "Need an account?";
                 switchBtn.innerText = "Register";
@@ -821,7 +854,7 @@
                         <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-[#2b2d31] rounded-full"></div>
                     </div>
                     <div class="flex flex-col overflow-hidden">
-                        <span class="text-gray-200 text-xs font-semibold truncate group-hover:text-white">${uData.displayName || 'Discord Member'}</span>
+                        <span class="text-gray-200 text-xs font-semibold truncate group-hover:text-white">${uData.displayName || 'Speechcentor Member'}</span>
                         <span class="text-[10px] text-gray-400 font-medium tracking-wider uppercase">${assignedRoleName}</span>
                     </div>
                 `;
@@ -832,36 +865,48 @@
         // ================= SOCIAL FRIEND SYSTEM DOM INTERFACES =================
 
         async function submitAddFriend() {
-            const uidInput = document.getElementById('add-friend-uid-input').value.trim();
+            let inputVal = document.getElementById('add-friend-uid-input').value.trim();
             const feedback = document.getElementById('add-friend-feedback');
             const currentU = window.auth.currentUser;
             
-            if(!uidInput) return;
-            if(uidInput === currentU.uid || uidInput === currentU.uid.substring(0,8)) {
-                feedback.className = "text-xs font-medium text-red-400";
-                feedback.innerText = "You cannot add yourself as a friend.";
-                return;
+            if(!inputVal) return;
+            
+            // Normalize input - strip leading @ if user added it
+            if(inputVal.startsWith('@')) {
+                inputVal = inputVal.substring(1);
             }
 
             try {
-                // Determine if user exists via ID parameter
-                const q = query(window.collection(window.db, "users"), where("userId", "==", uidInput));
-                const snap = await window.getDocs(q);
+                // Determine if input acts as a UserID OR Handle directly
+                let q = query(window.collection(window.db, "users"), where("userId", "==", inputVal));
+                let snap = await window.getDocs(q);
                 
                 if(snap.empty) {
+                    // Try looking up by handle if UserID fails
+                    q = query(window.collection(window.db, "users"), where("handle", "==", inputVal));
+                    snap = await window.getDocs(q);
+                }
+
+                if(snap.empty) {
                     feedback.className = "text-xs font-medium text-red-400";
-                    feedback.innerText = "No user matches that unique User ID inside Firebase!";
+                    feedback.innerText = "No user matches that unique User ID or unique handle!";
                     return;
                 }
 
                 let foundUid = "";
                 snap.forEach(doc => foundUid = doc.id);
 
+                if(foundUid === currentU.uid) {
+                    feedback.className = "text-xs font-medium text-red-400";
+                    feedback.innerText = "You cannot add yourself as a friend.";
+                    return;
+                }
+
                 // Ensure non-duplicity on sub-collection addition
                 const checkDup = await window.getDoc(window.doc(window.db, "users", currentU.uid, "friends", foundUid));
                 if(checkDup.exists()) {
                     feedback.className = "text-xs font-medium text-yellow-500";
-                    feedback.innerText = "This unique User ID is already inside your friends list!";
+                    feedback.innerText = "This user is already in your friends list!";
                     return;
                 }
 
@@ -871,7 +916,7 @@
                 });
 
                 feedback.className = "text-xs font-medium text-green-400";
-                feedback.innerText = "Friend Added successfully via ID payload pipeline!";
+                feedback.innerText = "Friend Added successfully!";
                 document.getElementById('add-friend-uid-input').value = "";
                 switchMainTab('list');
             } catch (err) {
@@ -887,7 +932,6 @@
             if(!targetUid) return;
 
             try {
-                // Query user based on user ID string
                 const q = query(window.collection(window.db, "users"), where("userId", "==", targetUid));
                 const snap = await window.getDocs(q);
                 let foundUid = "";
@@ -920,7 +964,6 @@
             const currentU = window.auth.currentUser;
             if(!currentU) return;
 
-            // Differentiate between viewing oneself or visiting another person's profile
             if(uid === currentU.uid) {
                 openProfileModal();
                 return;
@@ -931,7 +974,7 @@
             
             const uData = uSnap.data();
             
-            document.getElementById('v-profile-displayname').innerText = uData.displayName || "Discord User";
+            document.getElementById('v-profile-displayname').innerText = uData.displayName || "Speechcentor User";
             document.getElementById('v-profile-handle').innerText = "@" + (uData.handle || "---");
             document.getElementById('v-profile-uid').innerText = uData.userId || uid;
             document.getElementById('v-profile-pfp').src = uData.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback';
@@ -944,18 +987,14 @@
             const addBtn = document.getElementById('v-add-friend-btn');
             const rolesSection = document.getElementById('v-profile-roles-section');
 
-            // If visiting a server channel, assess permissions and show role assignments
             if(currentServerId !== 'home') {
                 const sSnap = await window.getDoc(window.doc(window.db, "servers", currentServerId));
                 if(sSnap.exists()){
                     const sData = sSnap.data();
                     if(sData.owner === currentU.uid) {
-                        // Authorized Owner - render role chips & dropdown selector
                         rolesSection.classList.remove('hidden');
-                        
                         const rolesArr = sData.roles || [];
                         const roleAssignments = sData.roleAssignments || {};
-                        
                         const chipWrapper = document.getElementById('v-roles-chips');
                         chipWrapper.innerHTML = '';
 
@@ -982,7 +1021,7 @@
                 rolesSection.classList.add('hidden');
             }
 
-            badge.innerHTML = `Visiting inspecting target profile dashboard via firebase ID: <span class="font-mono text-white select-all font-bold">${uData.userId}</span>`;
+            badge.innerHTML = `Inspecting profile dashboard via firebase ID: <span class="font-mono text-white select-all font-bold">${uData.userId}</span>`;
             addBtn.classList.remove('hidden');
             
             document.getElementById('visiting-profile-modal').classList.remove('hidden');
@@ -1000,6 +1039,7 @@
             document.getElementById('profile-displayname-input').value = document.getElementById('nav-user-displayname').innerText;
             document.getElementById('profile-handle-input').value = document.getElementById('nav-user-handle').innerText.replace('@', '');
             document.getElementById('profile-img-link').value = "";
+            document.getElementById('profile-edit-error').classList.add('hidden');
             
             document.getElementById('profile-modal').classList.remove('hidden');
         }
@@ -1011,19 +1051,47 @@
         async function saveProfileDetails() {
             const user = window.auth.currentUser;
             const newDisplayName = document.getElementById('profile-displayname-input').value.trim();
-            const newHandle = document.getElementById('profile-handle-input').value.trim().toLowerCase().replace('@','');
+            const errDiv = document.getElementById('profile-edit-error');
+            errDiv.classList.add('hidden');
 
-            if(!newDisplayName || !newHandle) return alert('Display name and Handle can not be empty.');
+            let newHandle = document.getElementById('profile-handle-input').value.trim().toLowerCase().replace('@','');
 
-            await window.updateDoc(window.doc(window.db, "users", user.uid), {
-                displayName: newDisplayName,
-                handle: newHandle
-            });
+            if(!newDisplayName || !newHandle) {
+                errDiv.innerText = "Display name and Handle can not be empty.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
 
-            document.getElementById('nav-user-displayname').innerText = newDisplayName;
-            document.getElementById('nav-user-handle').innerText = "@" + newHandle;
-            closeProfileModal();
-            alert('Profile configuration successfully updated.');
+            try {
+                // Check uniqueness constraints before committing the handle update
+                const q = query(collection(db, "users"), where("handle", "==", newHandle));
+                const snap = await getDocs(q);
+                
+                if (!snap.empty) {
+                    let docIdFound = "";
+                    snap.forEach(d => docIdFound = d.id);
+                    
+                    if(docIdFound !== user.uid) {
+                        errDiv.innerText = "This handle is already taken by another profile! Please choose another.";
+                        errDiv.classList.remove('hidden');
+                        return;
+                    }
+                }
+
+                await updateDoc(doc(db, "users", user.uid), {
+                    displayName: newDisplayName,
+                    handle: newHandle
+                });
+
+                document.getElementById('nav-user-displayname').innerText = newDisplayName;
+                document.getElementById('nav-user-handle').innerText = "@" + newHandle;
+                closeProfileModal();
+                alert('Profile configuration successfully updated.');
+            } catch (err) {
+                console.error(err);
+                errDiv.innerText = "Error updating profile.";
+                errDiv.classList.remove('hidden');
+            }
         }
 
         // Processing Image uploads, preparing cropping box
@@ -1220,7 +1288,6 @@
             const sSnap = await window.getDoc(sRef);
             if(!sSnap.exists()) return;
 
-            // Query unique internal user UID
             const q = query(window.collection(window.db, "users"), where("userId", "==", targetUid));
             const snap = await window.getDocs(q);
             let targetSystemUid = "";
