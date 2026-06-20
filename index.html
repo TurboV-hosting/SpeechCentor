@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Clone with Firebase - Advanced Edition</title>
+    <title>Discord Clone with Firebase - Dynamic Servers Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
@@ -279,7 +279,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, setDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, setDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, where } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAMAiYmLy2k5feaWbUHE7n5TUNlZGAr6nk",
@@ -311,6 +311,10 @@
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.signOut = signOut;
+        window.where = where;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.onSnapshot = onSnapshot;
 
         onAuthStateChanged(auth, async (user) => {
             const authModal = document.getElementById('auth-modal');
@@ -320,7 +324,7 @@
                 authModal.classList.add('hidden');
                 appDashboard.classList.remove('hidden');
                 await fetchProfileData(user.uid);
-                startListeningServers();
+                startListeningServers(user.uid);
                 loadMessages('home', 'general'); 
             } else {
                 authModal.classList.remove('hidden');
@@ -361,10 +365,13 @@
         }
         window.fetchProfileData = fetchProfileData;
 
-        // Start listening to Servers created in Firestore
-        function startListeningServers() {
+        // Listen to Servers where the current user is a member/owner
+        function startListeningServers(uid) {
             const serversRef = collection(db, "servers");
-            onSnapshot(serversRef, (snapshot) => {
+            // Check if membership array contains the uid
+            const q = query(serversRef, where("members", "array-contains", uid));
+            
+            onSnapshot(q, (snapshot) => {
                 const serversContainer = document.getElementById('servers-list-container');
                 serversContainer.innerHTML = '';
                 snapshot.forEach((docSnap) => {
@@ -490,20 +497,17 @@
                 const userDisplayName = document.getElementById('nav-user-displayname').innerText;
                 const userHandle = document.getElementById('nav-user-handle').innerText.replace('@','');
 
-                // If working with a custom created server, ensure checks (permissions if applicable)
+                // Optional permission check or simple validation logic 
                 if (currentServerId !== 'home') {
-                    // Check local permission flag or block
                     const sRef = window.doc(window.db, "servers", currentServerId);
                     const sSnap = await window.getDoc(sRef);
                     if(sSnap.exists()) {
                         const srvPerms = sSnap.data().rolePermissions || {};
-                        // Check if creator has role permissions
                         const uUid = window.auth.currentUser.uid;
-                        let canSend = true; // Default behavior if role setup allows it or uses open posting
+                        let canSend = true;
                         
-                        // Enforce simple permission checks for Server Roles
                         if(srvPerms['manage_messages'] && srvPerms['manage_messages'].includes(uUid)) {
-                            // Enforce or validate
+                            // Validation passed
                         }
                     }
                 }
@@ -537,13 +541,11 @@
             const settingsBlock = document.getElementById('server-settings-block');
             if (serverId !== 'home') {
                 settingsBlock.classList.remove('hidden');
-                // Fetch Channels list from Firestore Sub-Collections
                 const chanRef = window.collection(window.db, "servers", serverId, "channels");
                 const chSnap = await window.getDocs(chanRef);
                 chSnap.forEach((c) => {
                     appendChannelNode(c.id);
                 });
-                // Ensure default general is available/bootstrapped
                 if(chSnap.empty) {
                     const genRef = window.doc(window.db, "servers", serverId, "channels", "general");
                     await window.setDoc(genRef, { createdAt: window.serverTimestamp() });
@@ -585,14 +587,17 @@
             const sName = document.getElementById('new-server-name').value.trim();
             if(!sName) return;
             
+            const currentUid = window.auth.currentUser.uid;
+            
+            // Save server with owner ID and members list initialized with creator
             const newServerRef = await window.addDoc(window.collection(window.db, "servers"), {
                 name: sName,
-                owner: window.auth.currentUser.uid,
+                owner: currentUid,
+                members: [currentUid],
                 createdAt: window.serverTimestamp(),
-                roles: [{ id: "owner", name: "Server Owner", permissions: ["kick", "manage_msgs", "admin"] }]
+                roles: [{ id: "owner", name: "Server Owner", permissions: ["kick", "manage_msgs", "admin"], assignedUsers: [currentUid] }]
             });
             
-            // Create default general channel
             const chRef = window.doc(window.db, "servers", newServerRef.id, "channels", "general");
             await window.setDoc(chRef, { type: "text" });
 
@@ -628,7 +633,6 @@
             const user = window.auth.currentUser;
             if (!user) return;
             
-            // Populate Display Name and @ Handle from display container or db
             document.getElementById('profile-displayname-input').value = document.getElementById('nav-user-displayname').innerText;
             document.getElementById('profile-handle-input').value = document.getElementById('nav-user-handle').innerText.replace('@', '');
             document.getElementById('profile-img-link').value = "";
@@ -730,7 +734,6 @@
         async function openRolesModal() {
             if(currentServerId === 'home') return;
             
-            // Re-render role directories locally
             const sRef = window.doc(window.db, "servers", currentServerId);
             const sSnap = await window.getDoc(sRef);
             if(sSnap.exists()){
@@ -765,19 +768,16 @@
             activeRoleData = { ...roleObj, index: arrayIndex };
             document.getElementById('roles-editor-title').innerText = "Edit: " + roleObj.name;
             
-            // Populate checkbox properties based on stored permissions array
             document.getElementById('perm-kick').checked = roleObj.permissions.includes('kick');
             document.getElementById('perm-manage-msgs').checked = roleObj.permissions.includes('manage_msgs');
             document.getElementById('perm-admin').checked = roleObj.permissions.includes('admin');
 
-            // Render role members tracking array string 
             const assignees = roleObj.assignedUsers || [];
             document.getElementById('role-assignees-display').innerText = assignees.length ? "Assigned Users (Uids): " + assignees.join(', ') : "No users assigned.";
 
             document.getElementById('permissions-toggles').classList.remove('hidden');
             document.getElementById('save-role-btn').classList.remove('hidden');
             
-            // Only allow deleting non-owner roles
             if(roleObj.id !== 'owner') {
                 document.getElementById('delete-role-btn').classList.remove('hidden');
             } else {
@@ -785,7 +785,7 @@
             }
         }
 
-        function openCreateRoleModal() {
+        function openCreateRoleRole() {
             document.getElementById('create-role-modal').classList.remove('hidden');
         }
 
@@ -812,7 +812,7 @@
             await window.updateDoc(sRef, { roles: rolesArr });
             document.getElementById('new-role-name-input').value = '';
             closeCreateRoleModal();
-            closeRolesModal(); // Refresh Modal directory views
+            closeRolesModal();
             openRolesModal();
         }
 
@@ -829,14 +829,10 @@
             const srvData = sSnap.data();
             const rolesArr = srvData.roles || [];
 
-            // Update permissions array properties in indexed array object
             rolesArr[activeRoleData.index].permissions = newPerms;
-
-            // Also keep track of role permissions mapping locally in a single combined mapping node for easy message checking
             const rolePermMap = srvData.rolePermissions || {};
             newPerms.forEach(p => {
                 if(!rolePermMap[p]) rolePermMap[p] = [];
-                // assignees are added via dedicated user binding loop
             });
 
             await window.updateDoc(sRef, { 
@@ -877,7 +873,6 @@
 
             rolesArr[activeRoleData.index].assignedUsers.push(uId);
             
-            // Map simple permission map directly on server doc
             const rPerms = rolesArr[activeRoleData.index].permissions;
             const rolePermMap = srvData.rolePermissions || {};
             rPerms.forEach(perm => {
