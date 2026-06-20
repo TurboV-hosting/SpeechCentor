@@ -1048,6 +1048,7 @@
             document.getElementById('profile-modal').classList.add('hidden');
         }
 
+        // UPDATED SAVE PROFILE DETAILS LOGIC
         async function saveProfileDetails() {
             const user = window.auth.currentUser;
             const newDisplayName = document.getElementById('profile-displayname-input').value.trim();
@@ -1057,24 +1058,30 @@
             let newHandle = document.getElementById('profile-handle-input').value.trim().toLowerCase().replace('@','');
 
             if(!newDisplayName || !newHandle) {
-                errDiv.innerText = "Display name and Handle can not be empty.";
+                errDiv.innerText = "Display name and Handle cannot be empty.";
                 errDiv.classList.remove('hidden');
                 return;
             }
 
             try {
-                // Check uniqueness constraints before committing the handle update
-                const q = query(collection(db, "users"), where("handle", "==", newHandle));
-                const snap = await getDocs(q);
-                
-                if (!snap.empty) {
-                    let docIdFound = "";
-                    snap.forEach(d => docIdFound = d.id);
+                // Retrieve current document from firestore to check if handle has changed
+                const currentDocSnap = await window.getDoc(window.doc(db, "users", user.uid));
+                const existingHandle = currentDocSnap.exists() ? currentDocSnap.data().handle : "";
+
+                // Only verify uniqueness if the handle actually changed
+                if (newHandle !== existingHandle) {
+                    const q = query(collection(db, "users"), where("handle", "==", newHandle));
+                    const snap = await getDocs(q);
                     
-                    if(docIdFound !== user.uid) {
-                        errDiv.innerText = "This handle is already taken by another profile! Please choose another.";
-                        errDiv.classList.remove('hidden');
-                        return;
+                    if (!snap.empty) {
+                        let docIdFound = "";
+                        snap.forEach(d => docIdFound = d.id);
+                        
+                        if(docIdFound !== user.uid) {
+                            errDiv.innerText = "This @ handle is already taken by another profile! Please choose another.";
+                            errDiv.classList.remove('hidden');
+                            return;
+                        }
                     }
                 }
 
