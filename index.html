@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speechcentor - Unique Handles & Advanced Social Suite</title>
+    <title>Speechcentor - Mutual Requests, Friends & Blocking Suite</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
@@ -117,24 +117,39 @@
 
             <div id="home-dashboard-panel" class="flex-1 flex flex-col p-6 overflow-y-auto">
                 <div class="flex border-b border-gray-700 space-x-6 mb-6">
-                    <span class="text-white font-bold pb-2 border-b-2 border-[#5865F2]">Friends List</span>
+                    <span class="text-white font-bold pb-2 border-b-2 border-[#5865F2] cursor-pointer" onclick="switchMainTab('friends-list')">Friends List</span>
                     <span class="text-gray-400 font-semibold cursor-pointer hover:text-white" onclick="switchMainTab('add-friend')">Add Friend</span>
+                    <span class="text-gray-400 font-semibold cursor-pointer hover:text-white" onclick="switchMainTab('friend-requests')">Pending Requests <span id="requests-badge-count" class="bg-indigo-600 px-1.5 py-0.5 rounded-full text-xs text-white hidden">0</span></span>
+                    <span class="text-gray-400 font-semibold cursor-pointer hover:text-white" onclick="switchMainTab('blocked-list')">Blocked Users</span>
                 </div>
 
                 <div id="tab-friends-list" class="space-y-4">
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Online — <span id="online-count">0</span></div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Friends — <span id="online-count">0</span></div>
                     <div id="friends-container" class="space-y-1">
                         </div>
                 </div>
 
                 <div id="tab-add-friend" class="hidden space-y-4 max-w-lg">
                     <h3 class="text-white font-bold text-lg">Add Friend</h3>
-                    <p class="text-gray-400 text-sm">Add a friend using their User ID or unique @ handle (e.g., @myusername).</p>
+                    <p class="text-gray-400 text-sm">Add a friend using their unique @ handle (e.g., @myusername).</p>
                     <div class="bg-[#1e1f22] p-3 rounded-lg flex items-center space-x-3 border border-[#111214]">
-                        <input type="text" id="add-friend-uid-input" placeholder="User ID or Handle (e.g., u_8f39a or @username)" class="flex-1 bg-transparent text-white text-sm focus:outline-none">
+                        <input type="text" id="add-friend-uid-input" placeholder="Handle (e.g., @username)" class="flex-1 bg-transparent text-white text-sm focus:outline-none">
                         <button onclick="submitAddFriend()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-1.5 rounded text-sm font-medium transition">Send Request</button>
                     </div>
                     <div id="add-friend-feedback" class="text-xs font-medium"></div>
+                </div>
+
+                <div id="tab-friend-requests" class="hidden space-y-4">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Incoming Requests</div>
+                    <div id="incoming-requests-container" class="space-y-2 max-w-lg"></div>
+                    
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-6">Outgoing Sent Requests</div>
+                    <div id="outgoing-requests-container" class="space-y-2 max-w-lg"></div>
+                </div>
+
+                <div id="tab-blocked-list" class="hidden space-y-4">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Blocked Users List</div>
+                    <div id="blocked-container" class="space-y-1 max-w-lg"></div>
                 </div>
             </div>
 
@@ -240,8 +255,9 @@
             <div class="bg-[#2b2d31] px-6 py-4 flex justify-between items-center">
                 <button id="v-add-friend-btn" onclick="submitAddFriendFromModal()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded text-xs font-medium transition flex items-center space-x-1.5">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
-                    <span>Add to Friends List</span>
+                    <span>Send Friend Request</span>
                 </button>
+                <button id="v-block-user-btn" onclick="openBlockConfirmation()" class="bg-red-600/80 hover:bg-red-600 text-white px-4 py-2 rounded text-xs font-medium transition ml-2">Block User</button>
                 <button onclick="closeVisitingProfileModal()" class="text-white hover:bg-gray-700 px-4 py-2 rounded text-sm transition ml-auto">Dismiss</button>
             </div>
             
@@ -350,6 +366,17 @@
         </div>
     </div>
 
+    <div id="block-confirm-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs">
+        <div class="bg-[#313338] p-6 rounded-lg w-[440px] border border-[#232428] shadow-2xl">
+            <h3 class="text-white font-bold text-lg mb-2">Block <span id="block-target-name">User</span>?</h3>
+            <p class="text-gray-400 text-xs leading-relaxed mb-4">Blocking this user will instantly end your friendship, remove direct channels, and prevent them from sending direct messages or friendship requests to you.</p>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeBlockConfirmation()" class="text-gray-300 hover:underline text-sm font-medium">Cancel</button>
+                <button onclick="executeBlockUser()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium transition">Confirm Block</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
@@ -401,6 +428,8 @@
                 await fetchProfileData(user.uid);
                 startListeningServers(user.uid);
                 startListeningFriends(user.uid);
+                startListeningRequests(user.uid);
+                startListeningBlocks(user.uid);
                 selectServer('home');
             } else {
                 authModal.classList.remove('hidden');
@@ -429,7 +458,6 @@
                         const generatedId = "u_" + uid.substring(0, 8);
                         let baseHandle = "user_" + uid.substring(0, 4);
                         
-                        // Enforce uniqueness on first-time generation
                         let finalHandle = await getUniqueHandle(baseHandle);
 
                         await setDoc(doc(db, "users", uid), { 
@@ -453,8 +481,8 @@
                         handle: finalHandle,
                         userId: generatedId
                     });
-                    document.getElementById('nav-user-img').src = "https://api.dicebear.com/7.x/bottts/svg?seed= uid";
-                    document.getElementById('profile-pfp-preview').src = "https://api.dicebear.com/7.x/bottts/svg?seed= uid";
+                    document.getElementById('nav-user-img').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
+                    document.getElementById('profile-pfp-preview').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
                     document.getElementById('profile-user-id').value = generatedId;
                     document.getElementById('nav-user-displayname').innerText = "Speechcentor User";
                     document.getElementById('nav-user-handle').innerText = "@" + finalHandle;
@@ -504,13 +532,13 @@
             });
         }
 
-        // Live listening stream for friends
+        // Live listening stream for active mutual friends
         function startListeningFriends(uid) {
             const friendsRef = collection(db, "users", uid, "friends");
             onSnapshot(friendsRef, async (snapshot) => {
                 const friendsContainer = document.getElementById('friends-container');
                 friendsContainer.innerHTML = '';
-                let onlineCount = 0;
+                let friendsCount = 0;
                 
                 const docs = snapshot.docs;
                 document.getElementById('online-count').innerText = docs.length;
@@ -535,17 +563,116 @@
                             </div>
                         </div>
                         <div class="flex space-x-2">
-                            <button class="bg-[#2b2d31] hover:bg-red-900/40 hover:text-red-300 text-gray-400 p-2 rounded-full transition" onclick="event.stopPropagation(); removeFriend('${d.id}');" title="Remove Friend">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                            <button class="bg-[#2b2d31] hover:bg-yellow-900/40 hover:text-yellow-300 text-gray-400 p-2 rounded-full transition text-xs" onclick="event.stopPropagation(); removeFriendShip('${fData.friendUid}', '${d.id}');" title="Unfriend User">
+                                Unfriend
                             </button>
                         </div>
                     `;
                     friendsContainer.appendChild(fDiv);
-                    onlineCount++;
+                    friendsCount++;
                 }
             });
         }
         window.startListeningFriends = startListeningFriends;
+
+        // Listen to friend requests: Incoming and Outgoing
+        function startListeningRequests(uid) {
+            // Incoming requests
+            const incomingRef = collection(db, "users", uid, "friendRequests");
+            onSnapshot(incomingRef, (snap) => {
+                const container = document.getElementById('incoming-requests-container');
+                container.innerHTML = '';
+                
+                const badge = document.getElementById('requests-badge-count');
+                if(snap.docs.length > 0) {
+                    badge.innerText = snap.docs.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+
+                snap.forEach(async (docSnap) => {
+                    const reqData = docSnap.data(); // senderUid
+                    const senderDoc = await getDoc(doc(db, "users", reqData.senderUid));
+                    const sData = senderDoc.exists() ? senderDoc.data() : {};
+
+                    const node = document.createElement('div');
+                    node.className = "bg-[#2b2d31] p-3 rounded-lg flex items-center justify-between border border-[#1f2023]";
+                    node.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <img src="${sData.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback'}" class="w-8 h-8 rounded-full object-cover">
+                            <div class="flex flex-col">
+                                <span class="text-white text-sm font-bold leading-tight">${sData.displayName || 'Incoming User'}</span>
+                                <span class="text-gray-400 text-xs font-mono">@${sData.handle || 'handle'}</span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="acceptFriendRequest('${reqData.senderUid}', '${docSnap.id}')" class="bg-[#23a55a] hover:bg-[#1b7e43] text-white px-3 py-1.5 rounded text-xs font-medium transition">Accept</button>
+                            <button onclick="rejectFriendRequest('${docSnap.id}')" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded text-xs font-medium transition">Reject</button>
+                        </div>
+                    `;
+                    container.appendChild(node);
+                });
+            });
+
+            // Outgoing Requests
+            const outQuery = query(collection(db, "friendRequestsPending"), where("senderUid", "==", uid));
+            onSnapshot(outQuery, (snap) => {
+                const container = document.getElementById('outgoing-requests-container');
+                container.innerHTML = '';
+
+                snap.forEach(async (docSnap) => {
+                    const reqData = docSnap.data(); // receiverUid
+                    const receiverDoc = await getDoc(doc(db, "users", reqData.receiverUid));
+                    const rData = receiverDoc.exists() ? receiverDoc.data() : {};
+
+                    const node = document.createElement('div');
+                    node.className = "bg-[#2b2d31] p-3 rounded-lg flex items-center justify-between border border-[#1f2023]";
+                    node.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <img src="${rData.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback'}" class="w-8 h-8 rounded-full object-cover">
+                            <div class="flex flex-col">
+                                <span class="text-white text-sm font-bold leading-tight">Pending Approval: ${rData.displayName || 'Target User'}</span>
+                                <span class="text-gray-400 text-xs font-mono">@${rData.handle || 'handle'}</span>
+                            </div>
+                        </div>
+                        <button onclick="cancelOutgoingRequest('${docSnap.id}')" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded text-xs font-medium transition">Cancel</button>
+                    `;
+                    container.appendChild(node);
+                });
+            });
+        }
+        window.startListeningRequests = startListeningRequests;
+
+        // Live Block List Stream
+        function startListeningBlocks(uid) {
+            const blocksRef = collection(db, "users", uid, "blocks");
+            onSnapshot(blocksRef, async (snap) => {
+                const container = document.getElementById('blocked-container');
+                container.innerHTML = '';
+                
+                snap.forEach(async (d) => {
+                    const bData = d.data();
+                    const targetDoc = await getDoc(doc(db, "users", bData.blockedUid));
+                    const tData = targetDoc.exists() ? targetDoc.data() : {};
+
+                    const node = document.createElement('div');
+                    node.className = "bg-[#2b2d31] p-3 rounded-lg flex items-center justify-between border border-[#1f2023]";
+                    node.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <img src="${tData.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback'}" class="w-8 h-8 rounded-full object-cover">
+                            <div class="flex flex-col">
+                                <span class="text-white text-sm font-bold leading-tight">${tData.displayName || 'Blocked User'}</span>
+                                <span class="text-gray-400 text-xs font-mono">@${tData.handle || 'handle'}</span>
+                            </div>
+                        </div>
+                        <button onclick="unblockUser('${bData.blockedUid}', '${d.id}')" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-3 py-1.5 rounded text-xs font-medium transition">Unblock</button>
+                    `;
+                    container.appendChild(node);
+                });
+            });
+        }
+        window.startListeningBlocks = startListeningBlocks;
 
         // Live Chat stream listener
         function loadMessages(serverId, channelName) {
@@ -650,9 +777,15 @@
         function switchMainTab(tabId) {
             document.getElementById('tab-friends-list').classList.add('hidden');
             document.getElementById('tab-add-friend').classList.add('hidden');
+            document.getElementById('tab-friend-requests').classList.add('hidden');
+            document.getElementById('tab-blocked-list').classList.add('hidden');
 
             if(tabId === 'add-friend') {
                 document.getElementById('tab-add-friend').classList.remove('hidden');
+            } else if(tabId === 'friend-requests') {
+                document.getElementById('tab-friend-requests').classList.remove('hidden');
+            } else if(tabId === 'blocked-list') {
+                document.getElementById('tab-blocked-list').classList.remove('hidden');
             } else {
                 document.getElementById('tab-friends-list').classList.remove('hidden');
             }
@@ -765,7 +898,6 @@
             
             const currentUid = window.auth.currentUser.uid;
             
-            // Generate standard 'owner' role along with standard user array
             const newServerRef = await window.addDoc(window.collection(window.db, "servers"), {
                 name: sName,
                 owner: currentUid,
@@ -862,7 +994,7 @@
             }
         }
 
-        // ================= SOCIAL FRIEND SYSTEM DOM INTERFACES =================
+        // ================= MUTUAL FRIEND/BLOCK/REQUEST SYSTEM =================
 
         async function submitAddFriend() {
             let inputVal = document.getElementById('add-friend-uid-input').value.trim();
@@ -871,25 +1003,18 @@
             
             if(!inputVal) return;
             
-            // Normalize input - strip leading @ if user added it
             if(inputVal.startsWith('@')) {
                 inputVal = inputVal.substring(1);
             }
 
             try {
-                // Determine if input acts as a UserID OR Handle directly
-                let q = query(window.collection(window.db, "users"), where("userId", "==", inputVal));
-                let snap = await window.getDocs(q);
+                // Verify Handle exists in Directory
+                const q = query(window.collection(window.db, "users"), where("handle", "==", inputVal));
+                const snap = await window.getDocs(q);
                 
                 if(snap.empty) {
-                    // Try looking up by handle if UserID fails
-                    q = query(window.collection(window.db, "users"), where("handle", "==", inputVal));
-                    snap = await window.getDocs(q);
-                }
-
-                if(snap.empty) {
                     feedback.className = "text-xs font-medium text-red-400";
-                    feedback.innerText = "No user matches that unique User ID or unique handle!";
+                    feedback.innerText = "No user matches that unique handle!";
                     return;
                 }
 
@@ -898,64 +1023,206 @@
 
                 if(foundUid === currentU.uid) {
                     feedback.className = "text-xs font-medium text-red-400";
-                    feedback.innerText = "You cannot add yourself as a friend.";
+                    feedback.innerText = "You cannot send a friend request to yourself.";
                     return;
                 }
 
-                // Ensure non-duplicity on sub-collection addition
+                // Check blocks (Either party blocked the other)
+                const checkBlockMe = await window.getDoc(window.doc(window.db, "users", currentU.uid, "blocks", foundUid));
+                const checkBlockThem = await window.getDoc(window.doc(window.db, "users", foundUid, "blocks", currentU.uid));
+
+                if(checkBlockMe.exists() || checkBlockThem.exists()) {
+                    feedback.className = "text-xs font-medium text-red-400";
+                    feedback.innerText = "Cannot send friend request. Connection blocked.";
+                    return;
+                }
+
+                // Ensure non-duplicity on mutual friends check
                 const checkDup = await window.getDoc(window.doc(window.db, "users", currentU.uid, "friends", foundUid));
                 if(checkDup.exists()) {
                     feedback.className = "text-xs font-medium text-yellow-500";
-                    feedback.innerText = "This user is already in your friends list!";
+                    feedback.innerText = "This user is already your friend!";
                     return;
                 }
 
-                await window.setDoc(window.doc(window.db, "users", currentU.uid, "friends", foundUid), {
-                    friendUid: foundUid,
+                // Ensure no pending request exists from sender
+                const outQuery = query(
+                    window.collection(window.db, "friendRequestsPending"), 
+                    where("senderUid", "==", currentU.uid),
+                    where("receiverUid", "==", foundUid)
+                );
+                const outSnap = await window.getDocs(outQuery);
+                if(!outSnap.empty) {
+                    feedback.className = "text-xs font-medium text-yellow-500";
+                    feedback.innerText = "You already have a pending request sent to this user!";
+                    return;
+                }
+
+                // Create cross linked transaction request mechanism 
+                const pendingReqRef = await window.addDoc(window.collection(window.db, "friendRequestsPending"), {
+                    senderUid: currentU.uid,
+                    receiverUid: foundUid,
+                    createdAt: window.serverTimestamp()
+                });
+
+                await window.setDoc(window.doc(window.db, "users", foundUid, "friendRequests", pendingReqRef.id), {
+                    senderUid: currentU.uid,
+                    requestId: pendingReqRef.id,
                     createdAt: window.serverTimestamp()
                 });
 
                 feedback.className = "text-xs font-medium text-green-400";
-                feedback.innerText = "Friend Added successfully!";
+                feedback.innerText = "Friend request successfully sent!";
                 document.getElementById('add-friend-uid-input').value = "";
-                switchMainTab('list');
+                switchMainTab('friend-requests');
             } catch (err) {
                 console.error(err);
                 feedback.className = "text-xs font-medium text-red-400";
-                feedback.innerText = "Processing error executing friend connection.";
+                feedback.innerText = "Processing error executing friend request connection.";
             }
         }
 
         async function submitAddFriendFromModal() {
-            const targetUid = document.getElementById('v-profile-uid').innerText;
+            const targetHandle = document.getElementById('v-profile-handle').innerText.replace('@', '');
+            document.getElementById('add-friend-uid-input').value = "@" + targetHandle;
+            switchMainTab('add-friend');
+            closeVisitingProfileModal();
+        }
+
+        async function acceptFriendRequest(senderUid, requestId) {
             const currentU = window.auth.currentUser;
-            if(!targetUid) return;
+            if(!currentU) return;
 
             try {
-                const q = query(window.collection(window.db, "users"), where("userId", "==", targetUid));
-                const snap = await window.getDocs(q);
-                let foundUid = "";
-                snap.forEach(doc => foundUid = doc.id);
-
-                if(!foundUid) return alert('Invalid User object reference found!');
-
-                await window.setDoc(window.doc(window.db, "users", currentU.uid, "friends", foundUid), {
-                    friendUid: foundUid,
+                // 1. Establish mutual friendships
+                await window.setDoc(window.doc(window.db, "users", currentU.uid, "friends", senderUid), {
+                    friendUid: senderUid,
                     createdAt: window.serverTimestamp()
                 });
 
-                alert('Successfully added to friends list!');
-                closeVisitingProfileModal();
+                await window.setDoc(window.doc(window.db, "users", senderUid, "friends", currentU.uid), {
+                    friendUid: currentU.uid,
+                    createdAt: window.serverTimestamp()
+                });
+
+                // 2. Clear out pending transaction documents across sub-collections
+                await window.deleteDoc(window.doc(window.db, "users", currentU.uid, "friendRequests", requestId));
+                await window.deleteDoc(window.doc(window.db, "friendRequestsPending", requestId));
+
+                alert('You have accepted the friend request!');
+                switchMainTab('friends-list');
             } catch(err) {
-                console.log(err);
-                alert('An error occurred whilst attempting friend addition.');
+                console.error(err);
+                alert('An error occurred whilst accepting request.');
             }
         }
 
-        async function removeFriend(friendDocId) {
+        async function rejectFriendRequest(requestId) {
             const currentU = window.auth.currentUser;
             if(!currentU) return;
-            await window.deleteDoc(window.doc(window.db, "users", currentU.uid, "friends", friendDocId));
+            try {
+                await window.deleteDoc(window.doc(window.db, "users", currentU.uid, "friendRequests", requestId));
+                await window.deleteDoc(window.doc(window.db, "friendRequestsPending", requestId));
+            } catch(err) {
+                console.error(err);
+            }
+        }
+
+        async function cancelOutgoingRequest(requestId) {
+            try {
+                await window.deleteDoc(window.doc(window.db, "friendRequestsPending", requestId));
+                // Will cascade through onSnapshot streams to sender 
+            } catch(err) {
+                console.error(err);
+            }
+        }
+
+        async function removeFriendShip(friendUid, friendDocId) {
+            const currentU = window.auth.currentUser;
+            if(!currentU) return;
+            if(!confirm("Are you sure you want to unfriend this user?")) return;
+
+            try {
+                // 1. Delete mutual arrays
+                await window.deleteDoc(window.doc(window.db, "users", currentU.uid, "friends", friendUid));
+                await window.deleteDoc(window.doc(window.db, "users", friendUid, "friends", currentU.uid));
+                
+                // Switch dynamically back to list interface
+                switchMainTab('friends-list');
+            } catch(err) {
+                console.error(err);
+                alert('Error processing unfriend action.');
+            }
+        }
+
+        // ================= BLOCK AND UNBLOCK LOGIC =================
+
+        function openBlockConfirmation() {
+            const name = document.getElementById('v-profile-displayname').innerText;
+            document.getElementById('block-target-name').innerText = name;
+            document.getElementById('block-confirm-modal').classList.remove('hidden');
+        }
+
+        function closeBlockConfirmation() {
+            document.getElementById('block-confirm-modal').classList.add('hidden');
+        }
+
+        async function executeBlockUser() {
+            const currentU = window.auth.currentUser;
+            const targetUid = ""; // Look up via profile visiting inspector string
+            const targetHandleInput = document.getElementById('v-profile-handle').innerText.replace('@', '');
+
+            try {
+                // Discover the targeted UID dynamically via handles lookup
+                const q = query(window.collection(window.db, "users"), where("handle", "==", targetHandleInput));
+                const snap = await window.getDocs(q);
+                let foundUid = "";
+                snap.forEach(d => foundUid = d.id);
+
+                if(!foundUid) return alert('Target user could not be mapped.');
+
+                // 1. Put user into your profile blocks directory subcollection
+                await window.setDoc(window.doc(window.db, "users", currentU.uid, "blocks", foundUid), {
+                    blockedUid: foundUid,
+                    createdAt: window.serverTimestamp()
+                });
+
+                // 2. Clear any outstanding friend or pending requests immediately
+                // Unfriend mutually
+                await window.deleteDoc(window.doc(window.db, "users", currentU.uid, "friends", foundUid));
+                await window.deleteDoc(window.doc(window.db, "users", foundUid, "friends", currentU.uid));
+
+                // Clear any pending/incoming Requests
+                const reqQuery = query(window.collection(window.db, "friendRequestsPending"), where("senderUid", "in", [currentU.uid, foundUid]));
+                const reqSnap = await window.getDocs(reqQuery);
+                reqSnap.forEach(async(d) => {
+                    await window.deleteDoc(d.ref);
+                    await window.deleteDoc(window.doc(window.db, "users", currentU.uid, "friendRequests", d.id));
+                    await window.deleteDoc(window.doc(window.db, "users", foundUid, "friendRequests", d.id));
+                });
+
+                alert('User has been blocked. They can no longer interact with you.');
+                closeBlockConfirmation();
+                closeVisitingProfileModal();
+                switchMainTab('blocked-list');
+            } catch(err) {
+                console.error(err);
+                alert('Execution block failure.');
+            }
+        }
+
+        async function unblockUser(targetUid, blockDocId) {
+            const currentU = window.auth.currentUser;
+            if(!currentU) return;
+            if(!confirm("Are you sure you want to unblock this user?")) return;
+
+            try {
+                // Delete Block object
+                await window.deleteDoc(window.doc(window.db, "users", currentU.uid, "blocks", blockDocId));
+                alert('User has been unblocked.');
+            } catch(err) {
+                console.error(err);
+            }
         }
 
         // ================= USER PROFILES INSPECTION ENGINE =================
@@ -966,6 +1233,19 @@
 
             if(uid === currentU.uid) {
                 openProfileModal();
+                return;
+            }
+
+            // Check if viewing target involves any block checks (either way)
+            const checkBlockMe = await window.getDoc(window.doc(window.db, "users", currentU.uid, "blocks", uid));
+            const checkBlockThem = await window.getDoc(window.doc(window.db, "users", uid, "blocks", currentU.uid));
+
+            if(checkBlockMe.exists()) {
+                alert('You have blocked this user. Unblock them to inspect their profile.');
+                return;
+            }
+            if(checkBlockThem.exists()) {
+                alert('This user has blocked you.');
                 return;
             }
 
@@ -985,7 +1265,19 @@
 
             const badge = document.getElementById('v-footer-action-badge');
             const addBtn = document.getElementById('v-add-friend-btn');
+            const blockBtn = document.getElementById('v-block-user-btn');
             const rolesSection = document.getElementById('v-profile-roles-section');
+
+            // Verify if user is currently a friend
+            const friendCheck = await window.getDoc(window.doc(window.db, "users", currentU.uid, "friends", uid));
+            if(friendCheck.exists()) {
+                addBtn.classList.add('hidden'); // Mutually already friends
+            } else {
+                addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg><span>Send Friend Request</span>`;
+                addBtn.classList.remove('hidden');
+            }
+
+            blockBtn.classList.remove('hidden');
 
             if(currentServerId !== 'home') {
                 const sSnap = await window.getDoc(window.doc(window.db, "servers", currentServerId));
@@ -1022,7 +1314,6 @@
             }
 
             badge.innerHTML = `Inspecting profile dashboard via firebase ID: <span class="font-mono text-white select-all font-bold">${uData.userId}</span>`;
-            addBtn.classList.remove('hidden');
             
             document.getElementById('visiting-profile-modal').classList.remove('hidden');
         }
@@ -1048,7 +1339,6 @@
             document.getElementById('profile-modal').classList.add('hidden');
         }
 
-        // UPDATED SAVE PROFILE DETAILS LOGIC
         async function saveProfileDetails() {
             const user = window.auth.currentUser;
             const newDisplayName = document.getElementById('profile-displayname-input').value.trim();
@@ -1064,11 +1354,9 @@
             }
 
             try {
-                // Retrieve current document from firestore to check if handle has changed
                 const currentDocSnap = await window.getDoc(window.doc(db, "users", user.uid));
                 const existingHandle = currentDocSnap.exists() ? currentDocSnap.data().handle : "";
 
-                // Only verify uniqueness if the handle actually changed
                 if (newHandle !== existingHandle) {
                     const q = query(collection(db, "users"), where("handle", "==", newHandle));
                     const snap = await getDocs(q);
@@ -1203,7 +1491,7 @@
             activeRoleData = null;
         }
 
-        function selectRoleToEdit(roleObj, arrayIndex) {
+        function selectRoleEdit(roleObj, arrayIndex) {
             activeRoleData = { ...roleObj, index: arrayIndex };
             document.getElementById('roles-editor-title').innerText = "Edit: " + roleObj.name;
             
@@ -1291,7 +1579,7 @@
             const targetUid = document.getElementById('v-profile-uid').innerText;
             const assignedRole = document.getElementById('v-assign-role-select').value;
             
-            const sRef = window.doc(window.db, "servers", currentServerId);
+            const sRef = window.doc(window.doc(window.db, "servers", currentServerId));
             const sSnap = await window.getDoc(sRef);
             if(!sSnap.exists()) return;
 
