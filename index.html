@@ -340,4 +340,901 @@
             <h3 class="text-white font-bold mb-4 text-sm">Create Role</h3>
             <div>
                 <label class="block text-xs text-gray-400 uppercase tracking-wider">Role Name</label>
-                <input type="text"
+                <input type="text" id="new-role-name-input" class="w-full bg-[#1e1f22] border border-gray-700 rounded p-2 text-white text-sm mt-1 focus:outline-none focus:border-indigo-500">
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeCreateRoleModal()" class="text-gray-400 text-sm hover:underline">Cancel</button>
+                <button onclick="submitCreateRole()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-2 rounded text-sm">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, getDoc, setDoc, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, where } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMAiYmLy2k5feaWbUHE7n5TUNlZGAr6nk",
+            authDomain: "speechcentor.firebaseapp.com",
+            projectId: "speechcentor",
+            storageBucket: "speechcentor.firebasestorage.app",
+            messagingSenderId: "804696408540",
+            appId: "1:804696408540:web:855cae2217b55dca0a4f19",
+            measurementId: "G-HQ93JH0QCJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Bind firebase features to window scope
+        window.auth = auth;
+        window.db = db;
+        window.doc = doc;
+        window.getDoc = getDoc;
+        window.setDoc = setDoc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.arrayUnion = arrayUnion;
+        window.arrayRemove = arrayRemove;
+        window.getDocs = getDocs;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.serverTimestamp = serverTimestamp;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.signOut = signOut;
+        window.where = where;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.onSnapshot = onSnapshot;
+
+        onAuthStateChanged(auth, async (user) => {
+            const authModal = document.getElementById('auth-modal');
+            const appDashboard = document.getElementById('app-dashboard');
+
+            if (user) {
+                authModal.classList.add('hidden');
+                appDashboard.classList.remove('hidden');
+                await fetchProfileData(user.uid);
+                startListeningServers(user.uid);
+                startListeningFriends(user.uid);
+                selectServer('home');
+            } else {
+                authModal.classList.remove('hidden');
+                appDashboard.classList.add('hidden');
+            }
+        });
+
+        // Initialize / Pull active profile data + auto-generate UserID handles
+        async function fetchProfileData(uid) {
+            try {
+                const userDoc = await getDoc(doc(db, "users", uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    if (data.pfp) {
+                        document.getElementById('nav-user-img').src = data.pfp;
+                        document.getElementById('profile-pfp-preview').src = data.pfp;
+                    }
+                    if (data.banner) {
+                        document.getElementById('profile-banner-preview').style.backgroundImage = `url('${data.banner}')`;
+                    }
+                    document.getElementById('nav-user-displayname').innerText = data.displayName || "Discord User";
+                    document.getElementById('nav-user-handle').innerText = "@" + (data.handle || "user");
+                    document.getElementById('profile-user-id').value = data.userId || "u_" + uid.substring(0, 8);
+
+                    if(!data.userId) {
+                        const generatedId = "u_" + uid.substring(0, 8);
+                        await setDoc(doc(db, "users", uid), { userId: generatedId }, { merge: true });
+                        document.getElementById('profile-user-id').value = generatedId;
+                    }
+                } else {
+                    const generatedId = "u_" + uid.substring(0, 8);
+                    await setDoc(doc(db, "users", uid), {
+                        pfp: "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid,
+                        banner: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=800",
+                        displayName: "Discord User",
+                        handle: "user_" + uid.substring(0,4),
+                        userId: generatedId
+                    });
+                    document.getElementById('nav-user-img').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
+                    document.getElementById('profile-pfp-preview').src = "https://api.dicebear.com/7.x/bottts/svg?seed=" + uid;
+                    document.getElementById('profile-user-id').value = generatedId;
+                    document.getElementById('nav-user-displayname').innerText = "Discord User";
+                    document.getElementById('nav-user-handle').innerText = "@user_" + uid.substring(0,4);
+                }
+            } catch(e) {
+                console.log("Error obtaining user account details", e);
+            }
+        }
+        window.fetchProfileData = fetchProfileData;
+
+        // Listen to Servers joined
+        function startListeningServers(uid) {
+            const serversRef = collection(db, "servers");
+            const q = query(serversRef, where("members", "array-contains", uid));
+            
+            onSnapshot(q, (snapshot) => {
+                const serversContainer = document.getElementById('servers-list-container');
+                serversContainer.innerHTML = '';
+                snapshot.forEach((docSnap) => {
+                    const srv = docSnap.data();
+                    const srvDiv = document.createElement('div');
+                    srvDiv.className = "w-12 h-12 rounded-3xl bg-[#313338] hover:rounded-2xl hover:bg-[#5865F2] flex items-center justify-center cursor-pointer transition-all duration-200 text-white font-bold border-2 border-transparent hover:border-[#5865F2] relative group";
+                    srvDiv.title = srv.name;
+                    srvDiv.onclick = () => selectServer(docSnap.id, srv.name);
+                    srvDiv.innerHTML = srv.name.substring(0,2).toUpperCase();
+                    serversContainer.appendChild(srvDiv);
+                });
+            });
+        }
+
+        // Live listening stream for friends
+        function startListeningFriends(uid) {
+            const friendsRef = collection(db, "users", uid, "friends");
+            onSnapshot(friendsRef, async (snapshot) => {
+                const friendsContainer = document.getElementById('friends-container');
+                friendsContainer.innerHTML = '';
+                let onlineCount = 0;
+                
+                const docs = snapshot.docs;
+                document.getElementById('online-count').innerText = docs.length;
+
+                for (const d of docs) {
+                    const fData = d.data();
+                    // Obtain current snapshot states via reference profiles
+                    const refDoc = await getDoc(doc(db, "users", fData.friendUid));
+                    const fullUserObj = refDoc.exists() ? refDoc.data() : {};
+
+                    const fDiv = document.createElement('div');
+                    fDiv.className = "flex items-center justify-between p-2 rounded hover:bg-[#35373c] group transition cursor-pointer";
+                    fDiv.onclick = () => inspectUserProfileViaId(fData.friendUid);
+                    fDiv.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <img src="${fullUserObj.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback'}" class="w-10 h-10 rounded-full bg-[#5865F2] object-cover">
+                                <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#313338] rounded-full"></div>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-white font-semibold text-sm">${fullUserObj.displayName || 'Friend User'}</span>
+                                <span class="text-xs text-gray-400 font-mono">@${fullUserObj.handle || 'handle'}</span>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="bg-[#2b2d31] hover:bg-red-900/40 hover:text-red-300 text-gray-400 p-2 rounded-full transition" onclick="event.stopPropagation(); removeFriend('${d.id}');" title="Remove Friend">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                            </button>
+                        </div>
+                    `;
+                    friendsContainer.appendChild(fDiv);
+                    onlineCount++;
+                }
+            });
+        }
+        window.startListeningFriends = startListeningFriends;
+
+        // Live Chat stream listener
+        function loadMessages(serverId, channelName) {
+            const messagesRef = collection(db, "servers", serverId || "home", "channels", channelName || "general", "messages");
+            const q = query(messagesRef, orderBy("createdAt", "asc"));
+            
+            onSnapshot(q, (snapshot) => {
+                const messagesContainer = document.getElementById('messages-container');
+                messagesContainer.innerHTML = ''; 
+                snapshot.forEach((docSnap) => {
+                    const msg = docSnap.data();
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = "flex space-x-4 group hover:bg-[#2b2d31] p-1 rounded transition";
+                    
+                    let timeString = "Just now";
+                    if (msg.createdAt) {
+                        const date = msg.createdAt.toDate();
+                        timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    }
+
+                    msgDiv.innerHTML = `
+                        <img src="${msg.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback'}" class="w-10 h-10 rounded-full bg-[#5865F2] object-cover shrink-0 cursor-pointer" onclick="inspectUserProfileViaId('${msg.uid}')">
+                        <div class="flex flex-col w-full overflow-hidden">
+                            <div class="flex items-baseline space-x-2">
+                                <span class="font-semibold text-white text-sm cursor-pointer hover:underline" onclick="inspectUserProfileViaId('${msg.uid}')">${msg.authorName || 'Anonymous'}</span>
+                                <span class="text-xs text-[#b5bac1] font-mono tracking-wide select-all">@${msg.authorHandle || 'user'}</span>
+                                <span class="text-[10px] text-gray-400">${timeString}</span>
+                            </div>
+                            <p class="text-[#dbdee1] text-sm break-words mt-0.5">${escapeHTML(msg.text)}</p>
+                        </div>
+                    `;
+                    messagesContainer.appendChild(msgDiv);
+                });
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+        window.loadMessages = loadMessages;
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+    </script>
+
+    <script>
+        let isSignUp = false;
+        let cropper = null;
+        let activeCropTarget = null; 
+        
+        let currentServerId = 'home';
+        let currentChannelName = 'general';
+        let activeRoleData = null;
+
+        function toggleAuthMode() {
+            isSignUp = !isSignUp;
+            const title = document.getElementById('auth-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const switchText = document.getElementById('auth-switch-text');
+            const switchBtn = document.getElementById('auth-switch-btn');
+            const errDiv = document.getElementById('auth-error');
+            errDiv.classList.add('hidden');
+
+            if (isSignUp) {
+                title.innerText = "Create an account";
+                submitBtn.innerText = "Register";
+                switchText.innerText = "Already have an account?";
+                switchBtn.innerText = "Log In";
+            } else {
+                title.innerText = "Welcome back!";
+                submitBtn.innerText = "Log In";
+                switchText.innerText = "Need an account?";
+                switchBtn.innerText = "Register";
+            }
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const errDiv = document.getElementById('auth-error');
+            errDiv.classList.add('hidden');
+
+            try {
+                if (isSignUp) {
+                    await createUserWithEmailAndPassword(window.auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(window.auth, email, password);
+                }
+            } catch (error) {
+                errDiv.innerText = error.message.replace("Firebase: ", "");
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        async function logoutUser() {
+            try {
+                await signOut(window.auth);
+            } catch (error) {
+                console.error("Signout error:", error);
+            }
+        }
+
+        function switchMainTab(tabId) {
+            document.getElementById('tab-friends-list').classList.add('hidden');
+            document.getElementById('tab-add-friend').classList.add('hidden');
+
+            if(tabId === 'add-friend') {
+                document.getElementById('tab-add-friend').classList.remove('hidden');
+            } else {
+                document.getElementById('tab-friends-list').classList.remove('hidden');
+            }
+        }
+
+        // Submitting Messages Engine
+        async function sendMessage(e) {
+            e.preventDefault();
+            const inputVal = document.getElementById('message-input').value.trim();
+            if (!inputVal || !window.auth.currentUser) return;
+
+            try {
+                const userPfp = document.getElementById('nav-user-img').src;
+                const userDisplayName = document.getElementById('nav-user-displayname').innerText;
+                const userHandle = document.getElementById('nav-user-handle').innerText.replace('@','');
+
+                await addDoc(window.collection(window.db, "servers", currentServerId, "channels", currentChannelName, "messages"), {
+                    text: inputVal,
+                    authorName: userDisplayName,
+                    authorHandle: userHandle,
+                    uid: window.auth.currentUser.uid,
+                    pfp: userPfp,
+                    createdAt: window.serverTimestamp()
+                });
+                document.getElementById('message-input').value = ''; 
+            } catch (error) {
+                console.error("Error creating chat message: ", error);
+            }
+        }
+
+        // ================= SERVERS / CHANNELS DIRECTORY ENGINE =================
+        
+        async function selectServer(serverId, serverName = "Direct Messages") {
+            currentServerId = serverId;
+            
+            const homePanel = document.getElementById('home-dashboard-panel');
+            const chatPanel = document.getElementById('server-chat-panel');
+            const membersSidebar = document.getElementById('server-members-sidebar');
+            const settingsBlock = document.getElementById('server-settings-block');
+
+            document.getElementById('active-server-name').innerText = serverName;
+
+            if (serverId === 'home') {
+                homePanel.classList.remove('hidden');
+                chatPanel.classList.add('hidden');
+                membersSidebar.classList.add('hidden');
+                settingsBlock.classList.add('hidden');
+                
+                document.getElementById('active-channel-prefix').innerText = "@";
+                document.getElementById('active-channel-name').innerText = "friends";
+                document.getElementById('active-channel-desc').innerText = "Manage friends list, system logs, direct channels.";
+            } else {
+                homePanel.classList.add('hidden');
+                chatPanel.classList.remove('hidden');
+                membersSidebar.classList.remove('flex');
+                membersSidebar.classList.remove('hidden');
+                settingsBlock.classList.remove('hidden');
+
+                currentChannelName = "general";
+                document.getElementById('active-channel-prefix').innerText = "#";
+                document.getElementById('active-channel-name').innerText = "general";
+                document.getElementById('message-input').placeholder = "Message #general";
+
+                const channelsList = document.getElementById('channels-list');
+                channelsList.innerHTML = '';
+
+                const chanRef = window.collection(window.db, "servers", serverId, "channels");
+                const chSnap = await window.getDocs(chanRef);
+                chSnap.forEach((c) => {
+                    appendChannelNode(c.id);
+                });
+                if(chSnap.empty) {
+                    const genRef = window.doc(window.db, "servers", serverId, "channels", "general");
+                    await window.setDoc(genRef, { createdAt: window.serverTimestamp() });
+                    appendChannelNode("general");
+                }
+                
+                window.loadMessages(currentServerId, currentChannelName);
+                renderServerMembersPanel(serverId);
+            }
+        }
+
+        function appendChannelNode(cName) {
+            const channelsList = document.getElementById('channels-list');
+            const cDiv = document.createElement('div');
+            cDiv.className = `flex items-center space-x-2 px-2 py-1.5 rounded cursor-pointer transition-colors ${cName === currentChannelName ? 'bg-[#35373c] text-white' : 'hover:bg-[#35373c]/60 text-gray-400 hover:text-gray-200'}`;
+            cDiv.onclick = () => selectChannel(cName);
+            cDiv.innerHTML = `<span class="text-gray-400 text-lg">#</span><span class="font-medium text-sm">${cName}</span>`;
+            channelsList.appendChild(cDiv);
+        }
+
+        function selectChannel(chanName) {
+            currentChannelName = chanName;
+            document.getElementById('active-channel-name').innerText = chanName;
+            document.getElementById('message-input').placeholder = "Message #" + chanName;
+            window.loadMessages(currentServerId, currentChannelName);
+        }
+
+        function openCreateServerModal() {
+            document.getElementById('create-server-modal').classList.remove('hidden');
+        }
+
+        function closeCreateServerModal() {
+            document.getElementById('create-server-modal').classList.add('hidden');
+        }
+
+        async function submitCreateServer() {
+            const sName = document.getElementById('new-server-name').value.trim();
+            if(!sName) return;
+            
+            const currentUid = window.auth.currentUser.uid;
+            
+            // Generate standard 'owner' role along with standard user array
+            const newServerRef = await window.addDoc(window.collection(window.db, "servers"), {
+                name: sName,
+                owner: currentUid,
+                members: [currentUid],
+                createdAt: window.serverTimestamp(),
+                roles: [
+                    { id: "owner", name: "Server Owner", permissions: ["kick", "manage_msgs", "admin"] }
+                ],
+                roleAssignments: { [currentUid]: "Server Owner" }
+            });
+            
+            const chRef = window.doc(window.db, "servers", newServerRef.id, "channels", "general");
+            await window.setDoc(chRef, { type: "text" });
+
+            document.getElementById('new-server-name').value = '';
+            closeCreateServerModal();
+            selectServer(newServerRef.id, sName);
+        }
+
+        function openCreateChannelModal() {
+            if(currentServerId === 'home') return alert('Direct messages do not support adding channels.');
+            document.getElementById('create-channel-modal').classList.remove('hidden');
+        }
+
+        function closeCreateChannelModal() {
+            document.getElementById('create-channel-modal').classList.add('hidden');
+        }
+
+        async function submitCreateChannel() {
+            const cName = document.getElementById('new-channel-name').value.trim().toLowerCase();
+            if(!cName) return;
+
+            const chRef = window.doc(window.db, "servers", currentServerId, "channels", cName);
+            await window.setDoc(chRef, { type: "text" });
+
+            document.getElementById('new-channel-name').value = '';
+            closeCreateChannelModal();
+            selectServer(currentServerId, document.getElementById('active-server-name').innerText); 
+        }
+
+        async function leaveServer() {
+            if (currentServerId === 'home') return;
+            if(!confirm(`Are you sure you want to leave ${document.getElementById('active-server-name').innerText}?`)) return;
+            
+            const uId = window.auth.currentUser.uid;
+            const sRef = window.doc(window.db, "servers", currentServerId);
+            
+            await window.updateDoc(sRef, {
+                members: window.arrayRemove(uId)
+            });
+            
+            alert('Successfully left the server.');
+            selectServer('home');
+        }
+
+        // ================= SERVER MEMBERSHIP / ROLES ENGINE =================
+
+        async function renderServerMembersPanel(serverId) {
+            const onlineList = document.getElementById('online-members-list');
+            const offlineList = document.getElementById('offline-members-list');
+            onlineList.innerHTML = '';
+            offlineList.innerHTML = '';
+
+            const sRef = window.doc(window.db, "servers", serverId);
+            const sSnap = await window.getDoc(sRef);
+            if (!sSnap.exists()) return;
+            
+            const srvData = sSnap.data();
+            const memberUids = srvData.members || [];
+            const roleAssignments = srvData.roleAssignments || {};
+
+            for (const uid of memberUids) {
+                const uRef = window.doc(window.db, "users", uid);
+                const uSnap = await window.getDoc(uRef);
+                if (!uSnap.exists()) continue;
+                
+                const uData = uSnap.data();
+                const assignedRoleName = roleAssignments[uid] || "Member";
+
+                const mDiv = document.createElement('div');
+                mDiv.className = "flex items-center space-x-2.5 p-1.5 rounded hover:bg-[#35373c] transition cursor-pointer group";
+                mDiv.onclick = () => inspectUserProfileViaId(uid);
+                mDiv.innerHTML = `
+                    <div class="relative shrink-0">
+                        <img src="${uData.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback'}" class="w-8 h-8 rounded-full bg-[#5865F2] object-cover">
+                        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-[#2b2d31] rounded-full"></div>
+                    </div>
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-gray-200 text-xs font-semibold truncate group-hover:text-white">${uData.displayName || 'Discord Member'}</span>
+                        <span class="text-[10px] text-gray-400 font-medium tracking-wider uppercase">${assignedRoleName}</span>
+                    </div>
+                `;
+                onlineList.appendChild(mDiv);
+            }
+        }
+
+        // ================= SOCIAL FRIEND SYSTEM DOM INTERFACES =================
+
+        async function submitAddFriend() {
+            const uidInput = document.getElementById('add-friend-uid-input').value.trim();
+            const feedback = document.getElementById('add-friend-feedback');
+            const currentU = window.auth.currentUser;
+            
+            if(!uidInput) return;
+            if(uidInput === currentU.uid || uidInput === currentU.uid.substring(0,8)) {
+                feedback.className = "text-xs font-medium text-red-400";
+                feedback.innerText = "You cannot add yourself as a friend.";
+                return;
+            }
+
+            try {
+                // Determine if user exists via ID parameter
+                const q = query(window.collection(window.db, "users"), where("userId", "==", uidInput));
+                const snap = await window.getDocs(q);
+                
+                if(snap.empty) {
+                    feedback.className = "text-xs font-medium text-red-400";
+                    feedback.innerText = "No user matches that unique User ID inside Firebase!";
+                    return;
+                }
+
+                let foundUid = "";
+                snap.forEach(doc => foundUid = doc.id);
+
+                // Ensure non-duplicity on sub-collection addition
+                const checkDup = await window.getDoc(window.doc(window.db, "users", currentU.uid, "friends", foundUid));
+                if(checkDup.exists()) {
+                    feedback.className = "text-xs font-medium text-yellow-500";
+                    feedback.innerText = "This unique User ID is already inside your friends list!";
+                    return;
+                }
+
+                await window.setDoc(window.doc(window.db, "users", currentU.uid, "friends", foundUid), {
+                    friendUid: foundUid,
+                    createdAt: window.serverTimestamp()
+                });
+
+                feedback.className = "text-xs font-medium text-green-400";
+                feedback.innerText = "Friend Added successfully via ID payload pipeline!";
+                document.getElementById('add-friend-uid-input').value = "";
+                switchMainTab('list');
+            } catch (err) {
+                console.error(err);
+                feedback.className = "text-xs font-medium text-red-400";
+                feedback.innerText = "Processing error executing friend connection.";
+            }
+        }
+
+        async function submitAddFriendFromModal() {
+            const targetUid = document.getElementById('v-profile-uid').innerText;
+            const currentU = window.auth.currentUser;
+            if(!targetUid) return;
+
+            try {
+                // Query user based on user ID string
+                const q = query(window.collection(window.db, "users"), where("userId", "==", targetUid));
+                const snap = await window.getDocs(q);
+                let foundUid = "";
+                snap.forEach(doc => foundUid = doc.id);
+
+                if(!foundUid) return alert('Invalid User object reference found!');
+
+                await window.setDoc(window.doc(window.db, "users", currentU.uid, "friends", foundUid), {
+                    friendUid: foundUid,
+                    createdAt: window.serverTimestamp()
+                });
+
+                alert('Successfully added to friends list!');
+                closeVisitingProfileModal();
+            } catch(err) {
+                console.log(err);
+                alert('An error occurred whilst attempting friend addition.');
+            }
+        }
+
+        async function removeFriend(friendDocId) {
+            const currentU = window.auth.currentUser;
+            if(!currentU) return;
+            await window.deleteDoc(window.doc(window.db, "users", currentU.uid, "friends", friendDocId));
+        }
+
+        // ================= USER PROFILES INSPECTION ENGINE =================
+
+        async function inspectUserProfileViaId(uid) {
+            const currentU = window.auth.currentUser;
+            if(!currentU) return;
+
+            // Differentiate between viewing oneself or visiting another person's profile
+            if(uid === currentU.uid) {
+                openProfileModal();
+                return;
+            }
+
+            const uSnap = await window.getDoc(window.doc(window.db, "users", uid));
+            if(!uSnap.exists()) return alert('Profile Data not resolved.');
+            
+            const uData = uSnap.data();
+            
+            document.getElementById('v-profile-displayname').innerText = uData.displayName || "Discord User";
+            document.getElementById('v-profile-handle').innerText = "@" + (uData.handle || "---");
+            document.getElementById('v-profile-uid').innerText = uData.userId || uid;
+            document.getElementById('v-profile-pfp').src = uData.pfp || 'https://api.dicebear.com/7.x/bottts/svg?seed=Fallback';
+            
+            if (uData.banner) {
+                document.getElementById('v-profile-banner').style.backgroundImage = `url('${uData.banner}')`;
+            }
+
+            const badge = document.getElementById('v-footer-action-badge');
+            const addBtn = document.getElementById('v-add-friend-btn');
+            const rolesSection = document.getElementById('v-profile-roles-section');
+
+            // If visiting a server channel, assess permissions and show role assignments
+            if(currentServerId !== 'home') {
+                const sSnap = await window.getDoc(window.doc(window.db, "servers", currentServerId));
+                if(sSnap.exists()){
+                    const sData = sSnap.data();
+                    if(sData.owner === currentU.uid) {
+                        // Authorized Owner - render role chips & dropdown selector
+                        rolesSection.classList.remove('hidden');
+                        
+                        const rolesArr = sData.roles || [];
+                        const roleAssignments = sData.roleAssignments || {};
+                        
+                        const chipWrapper = document.getElementById('v-roles-chips');
+                        chipWrapper.innerHTML = '';
+
+                        const assigned = roleAssignments[uid] || "Member";
+                        const chip = document.createElement('span');
+                        chip.className = "bg-[#23a55a] text-white text-[10px] px-2.5 py-1 rounded font-bold tracking-wider uppercase";
+                        chip.innerText = assigned;
+                        chipWrapper.appendChild(chip);
+
+                        const selectMenu = document.getElementById('v-assign-role-select');
+                        selectMenu.innerHTML = '';
+                        rolesArr.forEach(r => {
+                            const opt = document.createElement('option');
+                            opt.value = r.name;
+                            opt.innerText = r.name;
+                            if(r.name === assigned) opt.selected = true;
+                            selectMenu.appendChild(opt);
+                        });
+                    } else {
+                        rolesSection.classList.add('hidden');
+                    }
+                }
+            } else {
+                rolesSection.classList.add('hidden');
+            }
+
+            badge.innerHTML = `Visiting inspecting target profile dashboard via firebase ID: <span class="font-mono text-white select-all font-bold">${uData.userId}</span>`;
+            addBtn.classList.remove('hidden');
+            
+            document.getElementById('visiting-profile-modal').classList.remove('hidden');
+        }
+        window.inspectUserProfileViaId = inspectUserProfileViaId;
+
+        function closeVisitingProfileModal() {
+            document.getElementById('visiting-profile-modal').classList.add('hidden');
+        }
+
+        function openProfileModal() {
+            const user = window.auth.currentUser;
+            if (!user) return;
+            
+            document.getElementById('profile-displayname-input').value = document.getElementById('nav-user-displayname').innerText;
+            document.getElementById('profile-handle-input').value = document.getElementById('nav-user-handle').innerText.replace('@', '');
+            document.getElementById('profile-img-link').value = "";
+            
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
+        async function saveProfileDetails() {
+            const user = window.auth.currentUser;
+            const newDisplayName = document.getElementById('profile-displayname-input').value.trim();
+            const newHandle = document.getElementById('profile-handle-input').value.trim().toLowerCase().replace('@','');
+
+            if(!newDisplayName || !newHandle) return alert('Display name and Handle can not be empty.');
+
+            await window.updateDoc(window.doc(window.db, "users", user.uid), {
+                displayName: newDisplayName,
+                handle: newHandle
+            });
+
+            document.getElementById('nav-user-displayname').innerText = newDisplayName;
+            document.getElementById('nav-user-handle').innerText = "@" + newHandle;
+            closeProfileModal();
+            alert('Profile configuration successfully updated.');
+        }
+
+        // Processing Image uploads, preparing cropping box
+        function prepareCrop(event, targetType) {
+            const file = event.target.files[0];
+            if (!file) return;
+            activeCropTarget = targetType;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const cropperImage = document.getElementById('cropper-image');
+                cropperImage.src = e.target.result;
+                
+                const container = document.getElementById('cropper-container');
+                if (targetType === 'pfp') {
+                    container.className = "cropper-pfp max-h-[300px] overflow-hidden";
+                } else {
+                    container.className = "cropper-banner max-h-[300px] overflow-hidden";
+                }
+
+                document.getElementById('cropper-modal').classList.remove('hidden');
+
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: targetType === 'pfp' ? 1 : 16/9,
+                    viewMode: 1,
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelCrop() {
+            document.getElementById('cropper-modal').classList.add('hidden');
+            if (cropper) cropper.destroy();
+        }
+
+        async function performCrop() {
+            if (!cropper) return;
+            const user = window.auth.currentUser;
+            if (!user) return;
+
+            const croppedCanvas = cropper.getCroppedCanvas({
+                width: activeCropTarget === 'pfp' ? 200 : 800,
+                height: activeCropTarget === 'pfp' ? 200 : 450,
+            });
+            
+            const dataURL = croppedCanvas.toDataURL(); 
+
+            try {
+                const userRef = window.doc(window.db, "users", user.uid);
+                if (activeCropTarget === 'pfp') {
+                    await window.setDoc(userRef, { pfp: dataURL }, { merge: true });
+                    document.getElementById('nav-user-img').src = dataURL;
+                    document.getElementById('profile-pfp-preview').src = dataURL;
+                    document.getElementById('profile-img-link').value = dataURL;
+                } else {
+                    await window.setDoc(userRef, { banner: dataURL }, { merge: true });
+                    document.getElementById('profile-banner-preview').style.backgroundImage = `url('${dataURL}')`;
+                    document.getElementById('profile-img-link').value = dataURL;
+                }
+                
+                alert("Profile image saved & generated address link created!");
+                document.getElementById('cropper-modal').classList.add('hidden');
+                cropper.destroy();
+            } catch(e) {
+                console.log("Error updating user assets", e);
+            }
+        }
+
+        // ================= ROLES DELEGATION & ASSIGNMENTS ENGINE =================
+
+        async function openRolesModal() {
+            if(currentServerId === 'home') return;
+            
+            const sRef = window.doc(window.db, "servers", currentServerId);
+            const sSnap = await window.getDoc(sRef);
+            if(sSnap.exists()){
+                const srvData = sSnap.data();
+                const rolesArr = srvData.roles || [];
+                
+                const rolesList = document.getElementById('server-roles-list');
+                rolesList.innerHTML = '';
+                
+                rolesArr.forEach((role, idx) => {
+                    const rBtn = document.createElement('button');
+                    rBtn.className = "w-full text-left p-2.5 rounded bg-[#1e1f22] text-gray-300 hover:bg-[#35373c] hover:text-white transition text-xs font-medium";
+                    rBtn.innerText = role.name;
+                    rBtn.onclick = () => selectRoleToEdit(role, idx);
+                    rolesList.appendChild(rBtn);
+                });
+            }
+
+            document.getElementById('roles-modal').classList.remove('hidden');
+        }
+
+        function closeRolesModal() {
+            document.getElementById('roles-modal').classList.add('hidden');
+            document.getElementById('permissions-toggles').classList.add('hidden');
+            document.getElementById('roles-editor-title').innerText = "Select a role to configure";
+            document.getElementById('save-role-btn').classList.add('hidden');
+            document.getElementById('delete-role-btn').classList.add('hidden');
+            activeRoleData = null;
+        }
+
+        function selectRoleToEdit(roleObj, arrayIndex) {
+            activeRoleData = { ...roleObj, index: arrayIndex };
+            document.getElementById('roles-editor-title').innerText = "Edit: " + roleObj.name;
+            
+            document.getElementById('perm-kick').checked = roleObj.permissions.includes('kick');
+            document.getElementById('perm-manage-msgs').checked = roleObj.permissions.includes('manage_msgs');
+            document.getElementById('perm-admin').checked = roleObj.permissions.includes('admin');
+
+            document.getElementById('permissions-toggles').classList.remove('hidden');
+            document.getElementById('save-role-btn').classList.remove('hidden');
+            
+            if(roleObj.id !== 'owner') {
+                document.getElementById('delete-role-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('delete-role-btn').classList.add('hidden');
+            }
+        }
+
+        function openCreateRoleModal() {
+            document.getElementById('create-role-modal').classList.remove('hidden');
+        }
+
+        function closeCreateRoleModal() {
+            document.getElementById('create-role-modal').classList.add('hidden');
+        }
+
+        async function submitCreateRole() {
+            const roleName = document.getElementById('new-role-name-input').value.trim();
+            if(!roleName) return;
+
+            const sRef = window.doc(window.db, "servers", currentServerId);
+            const sSnap = await window.getDoc(sRef);
+            const srvData = sSnap.data();
+            const rolesArr = srvData.roles || [];
+            
+            const newRole = {
+                id: "role_" + Math.random().toString(36).substr(2, 4),
+                name: roleName,
+                permissions: []
+            };
+            rolesArr.push(newRole);
+
+            await window.updateDoc(sRef, { roles: rolesArr });
+            document.getElementById('new-role-name-input').value = '';
+            closeCreateRoleModal();
+            closeRolesModal();
+            openRolesModal();
+        }
+
+        async function saveRolePermissions() {
+            if(!activeRoleData) return;
+
+            const newPerms = [];
+            if(document.getElementById('perm-kick').checked) newPerms.push('kick');
+            if(document.getElementById('perm-manage-msgs').checked) newPerms.push('manage_msgs');
+            if(document.getElementById('perm-admin').checked) newPerms.push('admin');
+
+            const sRef = window.doc(window.db, "servers", currentServerId);
+            const sSnap = await window.getDoc(sRef);
+            const srvData = sSnap.data();
+            const rolesArr = srvData.roles || [];
+
+            rolesArr[activeRoleData.index].permissions = newPerms;
+
+            await window.updateDoc(sRef, { roles: rolesArr });
+
+            alert('Role & permission assignments stored safely in Firestore.');
+            closeRolesModal();
+        }
+
+        async function deleteActiveRole() {
+            if(!activeRoleData || activeRoleData.id === 'owner') return;
+            
+            const sRef = window.doc(window.db, "servers", currentServerId);
+            const sSnap = await window.getDoc(sRef);
+            const srvData = sSnap.data();
+            let rolesArr = srvData.roles || [];
+
+            rolesArr = rolesArr.filter((_, idx) => idx !== activeRoleData.index);
+
+            await window.updateDoc(sRef, { roles: rolesArr });
+            closeRolesModal();
+        }
+
+        async function submitAssignRole() {
+            const targetUid = document.getElementById('v-profile-uid').innerText;
+            const assignedRole = document.getElementById('v-assign-role-select').value;
+            
+            const sRef = window.doc(window.db, "servers", currentServerId);
+            const sSnap = await window.getDoc(sRef);
+            if(!sSnap.exists()) return;
+
+            // Query unique internal user UID
+            const q = query(window.collection(window.db, "users"), where("userId", "==", targetUid));
+            const snap = await window.getDocs(q);
+            let targetSystemUid = "";
+            snap.forEach(d => targetSystemUid = d.id);
+
+            const sData = sSnap.data();
+            const assignments = sData.roleAssignments || {};
+            assignments[targetSystemUid] = assignedRole;
+
+            await window.updateDoc(sRef, { roleAssignments: assignments });
+            alert(`Delegated Role '${assignedRole}' correctly!`);
+            closeVisitingProfileModal();
+            renderServerMembersPanel(currentServerId);
+        }
+    </script>
+</body>
+</html>
