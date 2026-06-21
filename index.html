@@ -37,7 +37,7 @@
 
                 <div id="auth-register-fields" class="hidden space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Display Username Name</label>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Display Name</label>
                         <input type="text" id="auth-displayname" placeholder="Alex" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200">
                     </div>
                     <div>
@@ -48,9 +48,7 @@
 
                 <p id="auth-error" class="text-rose-400 text-xs hidden"></p>
 
-                <button id="btn-auth-primary" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2.5 rounded-xl transition-all shadow-md">
-                    Sign In
-                </button>
+                <button id="btn-auth-primary" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2.5 rounded-xl transition-all shadow-md">Sign In</button>
                 <div class="text-center mt-4">
                     <button id="btn-auth-toggle" class="text-xs text-indigo-400 hover:underline">Need a platform account? Register</button>
                 </div>
@@ -60,7 +58,7 @@
 
     <div id="app-container" class="hidden flex flex-1 h-full w-full overflow-hidden">
         
-        <nav class="w-18 bg-[#080b12] flex flex-col items-center py-4 gap-3 border-r border-slate-900/60">
+        <nav class="w-18 bg-[#080b12] flex flex-col items-center py-4 gap-3 border-r border-slate-900/60 flex-shrink-0">
             <button id="nav-dm-hub" class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white flex items-center justify-center transition-all group relative">
                 <i data-lucide="message-square" class="w-5 h-5"></i>
                 <span class="absolute left-20 bg-slate-950 px-2 py-1 rounded text-xs hidden group-hover:block whitespace-nowrap z-40">Direct Messages</span>
@@ -79,14 +77,12 @@
             </button>
         </nav>
 
-        <aside class="w-64 bg-[#0c101b] border-r border-slate-900 flex flex-col justify-between">
+        <aside class="w-64 bg-[#0c101b] border-r border-slate-900 flex flex-col justify-between flex-shrink-0">
             <div class="flex-1 flex flex-col overflow-hidden">
                 <div class="h-14 border-b border-slate-900 flex items-center px-4 font-bold text-sm tracking-wide text-slate-200 shadow-sm justify-between" id="sidebar-header-title">
                     <span>SpeechCentor Hub</span>
                 </div>
-                
-                <div id="sidebar-context-content" class="p-2 overflow-y-auto custom-scrollbar flex-1 space-y-4">
-                    </div>
+                <div id="sidebar-context-content" class="p-2 overflow-y-auto custom-scrollbar flex-1 space-y-4"></div>
             </div>
 
             <div class="p-3 bg-[#070a12] border-t border-slate-900 flex items-center justify-between gap-2">
@@ -111,19 +107,13 @@
                     <button id="btn-gen-invite" class="text-xs bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg transition-all flex items-center gap-1">
                         <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Invite Code
                     </button>
-                    <button id="btn-create-channel-modal" class="text-xs bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1">
+                    <button id="btn-create-channel-modal" class="text-xs bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 hidden">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Channel
                     </button>
                 </div>
             </header>
 
-            <div id="chat-viewport-messages" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
-                    <i data-lucide="sparkles" class="w-12 h-12 text-slate-700"></i>
-                    <h3 class="text-slate-300 font-semibold">SpeechCentor Matrix Activated</h3>
-                    <p class="text-xs max-w-xs">Select a communication server pipeline node or connect directly with friends.</p>
-                </div>
-            </div>
+            <div id="chat-viewport-messages" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar"></div>
 
             <div class="p-4 bg-gradient-to-t from-[#0f1524] to-transparent flex-shrink-0 hidden" id="chat-input-bar">
                 <form id="chat-form" class="glass rounded-xl px-4 py-3 flex items-center gap-3">
@@ -134,66 +124,89 @@
         </main>
     </div>
 
+    <div id="modal-my-profile" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass max-w-lg w-full rounded-2xl overflow-hidden shadow-2xl border border-slate-700/40" id="settings-card">
+            <div class="relative h-32 bg-gradient-to-r from-indigo-600 to-purple-600" id="my-profile-banner-preview">
+                <label class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-all cursor-pointer text-xs font-medium gap-2">
+                    <i data-lucide="camera" class="w-4 h-4"></i> Change Banner
+                    <input type="file" id="edit-banner-file" accept="image/*" class="hidden">
+                </label>
+                <button onclick="toggleModal('modal-my-profile', false)" class="absolute top-3 right-3 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="px-6 pb-6 relative pt-12">
+                <div class="absolute -top-10 left-6 w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-[#0f1626] bg-slate-800 relative group">
+                    <img id="my-profile-avatar-preview" src="" class="w-full h-full object-cover">
+                    <label class="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 flex items-center justify-center transition-all cursor-pointer text-white text-[10px]">
+                        <i data-lucide="camera" class="w-4 h-4"></i>
+                        <input type="file" id="edit-avatar-file" accept="image/*" class="hidden">
+                    </label>
+                </div>
+                <div class="mt-4 space-y-4 text-left">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Display Name</label>
+                            <input type="text" id="edit-my-displayname" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">@Handle Username</label>
+                            <input type="text" id="edit-my-handle" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <p id="edit-profile-error" class="text-rose-400 text-xs hidden"></p>
+                    <div class="pt-2 flex justify-end gap-3 border-t border-slate-800">
+                        <button id="btn-save-my-profile" class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-medium px-4 py-2 rounded-xl shadow-lg transition-all">Save Profile Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-user-card" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="glass max-w-sm w-full rounded-2xl overflow-hidden relative border border-slate-800">
             <div class="h-24 bg-gradient-to-r from-indigo-500 to-purple-600" id="inspect-banner"></div>
-            <button onclick="closeInspectModal()" class="absolute top-3 right-3 p-1.5 bg-black/40 rounded-full text-white hover:bg-black/60"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <button onclick="toggleModal('modal-user-card', false)" class="absolute top-3 right-3 p-1.5 bg-black/40 rounded-full text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
             <div class="px-5 pb-5 pt-12 relative">
-                <img id="inspect-avatar" src="" class="w-20 h-20 rounded-xl object-cover absolute -top-10 left-5 ring-4 ring-[#0f1524] bg-slate-800">
-                <h3 id="inspect-name" class="font-bold text-lg text-slate-100">User Profile</h3>
+                <img id="inspect-avatar" src="" class="w-18 h-18 rounded-xl object-cover absolute -top-9 left-5 ring-4 ring-[#0f1524] bg-slate-800">
+                <h3 id="inspect-name" class="font-bold text-base text-slate-100">User Profile</h3>
                 <p id="inspect-handle" class="text-xs text-indigo-400 mb-2">@handle</p>
-                <p id="inspect-uid" class="text-[10px] text-slate-500 mb-4 font-mono">SC-ID</p>
-                <div id="inspect-action-container" class="pt-2 border-t border-slate-800">
-                    </div>
+                <div id="inspect-action-container" class="pt-2 border-t border-slate-800"></div>
             </div>
         </div>
     </div>
 
     <div id="modal-create-server" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="glass max-w-sm w-full rounded-2xl p-6 border border-slate-800 space-y-4">
-            <h3 class="font-bold text-base text-slate-200">Initialize Communication Guild</h3>
-            <div>
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Server Guild Title Name</label>
-                <input type="text" id="srv-input-name" placeholder="My Alpha Sector Space" class="w-full bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2 text-sm outline-none text-slate-200">
-            </div>
-            <div class="flex justify-end gap-2 text-xs pt-2">
+            <h3 class="font-bold text-base text-slate-200">Initialize Server Space</h3>
+            <input type="text" id="srv-input-name" placeholder="Server Name" class="w-full bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none">
+            <div class="flex justify-end gap-2 text-xs">
                 <button onclick="toggleModal('modal-create-server', false)" class="px-3 py-2 bg-slate-800 rounded-lg">Cancel</button>
-                <button id="btn-execute-create-server" class="px-3 py-2 bg-indigo-500 rounded-lg font-medium text-white">Create Space</button>
+                <button id="btn-execute-create-server" class="px-3 py-2 bg-indigo-500 rounded-lg text-white">Create</button>
             </div>
         </div>
     </div>
 
     <div id="modal-create-channel" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="glass max-w-sm w-full rounded-2xl p-6 border border-slate-800 space-y-4">
-            <h3 class="font-bold text-base text-slate-200">Create Pipeline Communication Node</h3>
-            <div>
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pipeline Node Type</label>
-                <select id="chan-input-type" class="w-full bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2 text-sm outline-none text-slate-300">
-                    <option value="text">Text Communication Node (#)</option>
-                    <option value="voice">Voice Comms Streaming Node (VC)</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Node Access Address Alias</label>
-                <input type="text" id="chan-input-name" placeholder="announcements" class="w-full bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2 text-sm outline-none text-slate-200">
-            </div>
-            <div class="flex justify-end gap-2 text-xs pt-2">
+            <h3 class="font-bold text-base text-slate-200">Create Node Channel</h3>
+            <select id="chan-input-type" class="w-full bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2 text-sm text-slate-300 outline-none">
+                <option value="text">Text Channel (#)</option>
+                <option value="voice">Voice Channel (VC)</option>
+            </select>
+            <input type="text" id="chan-input-name" placeholder="channel-name" class="w-full bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none">
+            <div class="flex justify-end gap-2 text-xs">
                 <button onclick="toggleModal('modal-create-channel', false)" class="px-3 py-2 bg-slate-800 rounded-lg">Cancel</button>
-                <button id="btn-execute-create-channel" class="px-3 py-2 bg-indigo-500 rounded-lg font-medium text-white">Deploy Node</button>
+                <button id="btn-execute-create-channel" class="px-3 py-2 bg-indigo-500 rounded-lg text-white">Deploy</button>
             </div>
         </div>
     </div>
 
     <div id="modal-join-server" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
         <div class="glass max-w-sm w-full rounded-2xl p-6 border border-slate-800 space-y-4">
-            <h3 class="font-bold text-base text-slate-200">Access Node Guild Cluster</h3>
-            <div>
-                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Temporary Invite Code String Token</label>
-                <input type="text" id="join-input-code" placeholder="SC-INV-XXXX" class="w-full bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2 text-sm outline-none text-slate-200">
-            </div>
-            <div class="flex justify-end gap-2 text-xs pt-2">
+            <h3 class="font-bold text-base text-slate-200">Access Server Guild</h3>
+            <input type="text" id="join-input-code" placeholder="SC-INV-XXXX" class="w-full bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none">
+            <div class="flex justify-end gap-2 text-xs">
                 <button onclick="toggleModal('modal-join-server', false)" class="px-3 py-2 bg-slate-800 rounded-lg">Cancel</button>
-                <button id="btn-execute-join" class="px-3 py-2 bg-indigo-500 rounded-lg font-medium text-white">Join Guild</button>
+                <button id="btn-execute-join" class="px-3 py-2 bg-indigo-500 rounded-lg text-white">Join</button>
             </div>
         </div>
     </div>
@@ -201,7 +214,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, query, where, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, deleteDoc, updateDoc, arrayUnion, collection, addDoc, query, where, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAMAiYmLy2k5feaWbUHE7n5TUNlZGAr6nk",
@@ -217,49 +230,44 @@
         const db = getFirestore(app);
 
         let myUserData = null;
-        let activeContext = "dm-hub"; // "dm-hub", or "server-[id]"
-        let activeChannelId = null;   // Active channel inside server context, or friendId inside dm context
+        let activeContext = "dm-hub";
+        let activeChannelId = null;
         let isRegistering = false;
 
         let unsubChannels = null;
         let unsubMessages = null;
 
-        // Runtime Global Event Triggers
         window.toggleModal = (id, show) => { document.getElementById(id).classList.toggle('hidden', !show); };
 
-        // Authentication Management Screen Logic Toggler Switch
+        // AUTH SPLIT INTERCEPTOR ROUTER
         document.getElementById('btn-auth-toggle').addEventListener('click', () => {
             isRegistering = !isRegistering;
-            document.getElementById('auth-title').textContent = isRegistering ? "Create Matrix Profile Identity" : "Access SpeechCentor";
+            document.getElementById('auth-title').textContent = isRegistering ? "Register Account" : "Access SpeechCentor";
             document.getElementById('auth-register-fields').classList.toggle('hidden', !isRegistering);
-            document.getElementById('btn-auth-primary').textContent = isRegistering ? "Register Profile Identity" : "Sign In";
-            document.getElementById('btn-auth-toggle').textContent = isRegistering ? "Already possess an active persona node? Sign In" : "Need a platform account? Register";
+            document.getElementById('btn-auth-primary').textContent = isRegistering ? "Register" : "Sign In";
         });
 
-        // Authentication Action Dispatch Execution Matrix Hub Router
         document.getElementById('btn-auth-primary').addEventListener('click', async () => {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
             const errorEl = document.getElementById('auth-error');
             errorEl.classList.add('hidden');
 
-            if (!email || !password) { errorEl.textContent = "All baseline authentication properties required."; errorEl.classList.remove('hidden'); return; }
+            if (!email || !password) { errorEl.textContent = "Fields incomplete."; errorEl.classList.remove('hidden'); return; }
 
             try {
                 if (isRegistering) {
                     const dispName = document.getElementById('auth-displayname').value.trim();
-                    const handleInput = document.getElementById('auth-handle').value.trim().toLowerCase();
+                    const handleInput = document.getElementById('auth-handle').value.trim().toLowerCase().replace(/[@\s]/g, "");
 
-                    if (!dispName || !handleInput) { errorEl.textContent = "Identity registration metadata properties missing."; errorEl.classList.remove('hidden'); return; }
-                    const handleRegex = /^[a-zA-Z0-9_]+$/;
-                    if (!handleRegex.test(handleInput)) { errorEl.textContent = "Handle naming schema format anomaly detected."; errorEl.classList.remove('hidden'); return; }
+                    if (!dispName || !handleInput) { errorEl.textContent = "Registration details missing."; errorEl.classList.remove('hidden'); return; }
+                    if (!/^[a-zA-Z0-9_]+$/.test(handleInput)) { errorEl.textContent = "Handle format error."; errorEl.classList.remove('hidden'); return; }
 
-                    // Validate handle availability matrix lock block check
                     const reservedSnap = await getDoc(doc(db, "usernames", handleInput));
-                    if (reservedSnap.exists()) { errorEl.textContent = "Identity handle already locked by another proxy entity."; errorEl.classList.remove('hidden'); return; }
+                    if (reservedSnap.exists()) { errorEl.textContent = "Username taken."; errorEl.classList.remove('hidden'); return; }
 
                     const credential = await createUserWithEmailAndPassword(auth, email, password);
-                    const systemUid = `SC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
+                    const systemUid = `SC-${Math.floor(1000 + Math.random() * 9000)}`;
                     
                     const newProfile = {
                         userId: systemUid,
@@ -276,23 +284,20 @@
                     await signInWithEmailAndPassword(auth, email, password);
                 }
             } catch (err) {
-                errorEl.textContent = err.message;
-                errorEl.classList.remove('hidden');
+                errorEl.textContent = err.message; errorEl.classList.remove('hidden');
             }
         });
 
         document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-        // State Machine State Monitor Tracker Interface Router
-        onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                const docSnap = await getDoc(doc(db, "users", firebaseUser.uid));
+        onAuthStateChanged(auth, async (fUser) => {
+            if (fUser) {
+                const docSnap = await getDoc(doc(db, "users", fUser.uid));
                 if (docSnap.exists()) {
                     myUserData = docSnap.data();
                     document.getElementById('auth-screen').classList.add('hidden');
                     document.getElementById('app-container').classList.remove('hidden');
-                    lucide.createIcons();
-                    initAppCoreEngineHydration();
+                    initAppDashboard();
                 }
             } else {
                 document.getElementById('auth-screen').classList.remove('hidden');
@@ -300,456 +305,319 @@
             }
         });
 
-        // Initialize App Engine Matrix Listeners
-        function initAppCoreEngineHydration() {
-            // Populate profile footer metrics panel parameters
-            document.getElementById('my-displayname').textContent = myUserData.displayName;
-            document.getElementById('my-handle').textContent = `@${myUserData.username}`;
-            document.getElementById('my-avatar').src = myUserData.avatarUrl;
-
-            // Stream user server registry memberships
+        function initAppDashboard() {
+            updateGlobalUserHeaderUI();
             onSnapshot(query(collection(db, "servers"), where("members", "array-contains", auth.currentUser.uid)), (snapshot) => {
                 const serverContainer = document.getElementById('server-list');
                 serverContainer.innerHTML = "";
                 snapshot.forEach(docNode => {
                     const data = docNode.data();
                     const srvId = docNode.id;
-                    const charInitial = data.name.charAt(0).toUpperCase();
-                    
-                    const btnHtml = `
+                    serverContainer.insertAdjacentHTML('beforeend', `
                         <button onclick="switchContext('server-${srvId}')" class="w-12 h-12 rounded-full bg-slate-800 text-slate-200 hover:bg-indigo-500 hover:text-white flex items-center justify-center font-bold text-sm transition-all group relative border border-slate-700/40">
-                            ${charInitial}
+                            ${data.name.charAt(0).toUpperCase()}
                             <span class="absolute left-20 bg-slate-950 px-2 py-1 rounded text-xs hidden group-hover:block whitespace-nowrap z-40">${data.name}</span>
                         </button>
-                    `;
-                    serverContainer.insertAdjacentHTML('beforeend', btnHtml);
+                    `);
                 });
             });
-
-            // Default route execution deployment focus
             switchContext("dm-hub");
         }
 
-        // Context Router Switching Control Mechanism (Servers vs DMs)
+        function updateGlobalUserHeaderUI() {
+            document.getElementById('my-displayname').textContent = myUserData.displayName;
+            document.getElementById('my-handle').textContent = `@${myUserData.username}`;
+            document.getElementById('my-avatar').src = myUserData.avatarUrl;
+        }
+
+        // WRITABLE PROFILE HANDLING PIPELINE CODES
+        document.getElementById('btn-my-settings').addEventListener('click', () => {
+            document.getElementById('edit-my-displayname').value = myUserData.displayName;
+            document.getElementById('edit-my-handle').value = myUserData.username;
+            document.getElementById('my-profile-avatar-preview').src = myUserData.avatarUrl;
+            
+            const bPreview = document.getElementById('my-profile-banner-preview');
+            if (myUserData.bannerUrl.startsWith("data:") || myUserData.bannerUrl.startsWith("http")) {
+                bPreview.style.background = `url('${myUserData.bannerUrl}') center/cover no-repeat`;
+            } else { bPreview.style.background = myUserData.bannerUrl; }
+
+            document.getElementById('edit-profile-error').classList.add('hidden');
+            toggleModal('modal-my-profile', true);
+            lucide.createIcons();
+        });
+
+        function processFileToUrl(file, maxW, maxH) {
+            return new Promise((res) => {
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image(); img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
+                        else { if (h > maxH) { w *= maxH / h; h = maxH; } }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        res(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                };
+            });
+        }
+
+        document.getElementById('edit-avatar-file').addEventListener('change', async (e) => {
+            if (e.target.files[0]) {
+                const url = await processFileToUrl(e.target.files[0], 200, 200);
+                document.getElementById('my-profile-avatar-preview').src = url;
+            }
+        });
+
+        document.getElementById('edit-banner-file').addEventListener('change', async (e) => {
+            if (e.target.files[0]) {
+                const url = await processFileToUrl(e.target.files[0], 700, 250);
+                document.getElementById('my-profile-banner-preview').style.background = `url('${url}') center/cover no-repeat`;
+            }
+        });
+
+        document.getElementById('btn-save-my-profile').addEventListener('click', async () => {
+            const nextDisp = document.getElementById('edit-my-displayname').value.trim();
+            const nextHandle = document.getElementById('edit-my-handle').value.trim().toLowerCase().replace(/[@\s]/g, "");
+            const pError = document.getElementById('edit-profile-error');
+            pError.classList.add('hidden');
+
+            if (!nextDisp || !nextHandle || !/^[a-zA-Z0-9_]+$/.test(nextHandle)) {
+                pError.textContent = "Invalid entry criteria validation values."; pError.classList.remove('hidden'); return;
+            }
+
+            try {
+                if (nextHandle !== myUserData.username) {
+                    const checkFree = await getDoc(doc(db, "usernames", nextHandle));
+                    if (checkFree.exists()) { pError.textContent = "Username taken."; pError.classList.remove('hidden'); return; }
+                    
+                    // Atomic transaction proxy re-allocation swap sequence
+                    await deleteDoc(doc(db, "usernames", myUserData.username));
+                    await setDoc(doc(db, "usernames", nextHandle), { uid: auth.currentUser.uid });
+                }
+
+                const updatedData = {
+                    ...myUserData,
+                    displayName: nextDisp,
+                    username: nextHandle,
+                    avatarUrl: document.getElementById('my-profile-avatar-preview').src,
+                    bannerUrl: document.getElementById('my-profile-banner-preview').style.background.includes("url") ? 
+                        document.getElementById('my-profile-banner-preview').style.background.slice(5, -2).replace(/"/g, "") : 
+                        document.getElementById('my-profile-banner-preview').style.background
+                };
+
+                await setDoc(doc(db, "users", auth.currentUser.uid), updatedData);
+                myUserData = updatedData;
+                updateGlobalUserHeaderUI();
+                toggleModal('modal-my-profile', false);
+            } catch(e) { pError.textContent = e.message; pError.classList.remove('hidden'); }
+        });
+
+        // CONTEXT SWITCH ENGINE BLOCK MAPPING
         window.switchContext = (contextId) => {
-            activeContext = contextId;
-            activeChannelId = null;
+            activeContext = contextId; activeChannelId = null;
             if (unsubChannels) unsubChannels();
             if (unsubMessages) unsubMessages();
-
             document.getElementById('server-action-controls').classList.add('hidden');
             document.getElementById('chat-input-bar').classList.add('hidden');
-            clearChatViewport("Select a node connection channel path to start communicating.");
+            clearChatViewport("Select an ecosystem communication array path.");
 
             if (contextId === "dm-hub") {
                 document.getElementById('sidebar-header-title').innerHTML = `<span>SpeechCentor Hub</span>`;
                 renderDmHubSidebar();
             } else if (contextId.startsWith("server-")) {
-                const srvId = contextId.replace("server-", "");
                 document.getElementById('server-action-controls').classList.remove('hidden');
-                renderServerSidebarLayoutPipeline(srvId);
+                renderServerSidebarLayoutPipeline(contextId.replace("server-", ""));
             }
         };
 
-        // Render Sidebar Area for Direct Messages, Friend Lists, and Pending Requests
-        function renderDmHubSidebar() {
-            const sidebar = document.getElementById('sidebar-context-content');
-            sidebar.innerHTML = `
-                <div class="space-y-4">
-                    <div>
-                        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Add Operator Friend</div>
-                        <div class="flex gap-1 px-1">
-                            <input type="text" id="input-friend-handle" placeholder="operator_handle" class="bg-slate-900 border border-slate-800 text-xs rounded-lg px-2 py-1.5 flex-1 outline-none text-slate-200">
-                            <button id="btn-send-friend-req" class="bg-indigo-500 p-1.5 rounded-lg text-white hover:bg-indigo-600"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i></button>
-                        </div>
-                        <p id="friend-req-feedback" class="text-[10px] px-2 mt-1 hidden"></p>
-                    </div>
-                    <div class="w-full h-[1px] bg-slate-900"></div>
-                    <div>
-                        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Pending Clearance Approvals</div>
-                        <div id="pending-requests-box" class="space-y-1"></div>
-                    </div>
-                    <div class="w-full h-[1px] bg-slate-900"></div>
-                    <div>
-                        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Direct Secure Lines</div>
-                        <div id="friends-list-box" class="space-y-1"></div>
-                    </div>
-                </div>
-            `;
-            lucide.createIcons();
-
-            // Direct Message friend workflow controller connection binding hook
-            document.getElementById('btn-send-friend-req').addEventListener('click', dispatchFriendRequestAction);
-
-            // Stream pending request vectors incoming matching target
-            onSnapshot(query(collection(db, "friendRequests"), where("receiverId", "==", auth.currentUser.uid), where("status", "==", "pending")), (snap) => {
-                const container = document.getElementById('pending-requests-box');
-                container.innerHTML = snap.empty ? `<p class="text-[11px] text-slate-600 px-2 italic">No authorizations pending.</p>` : "";
-                snap.forEach(docNode => {
-                    const req = docNode.data();
-                    const reqId = docNode.id;
-                    const itemHtml = `
-                        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/40 border border-slate-800/50">
-                            <span class="text-xs text-slate-300 font-medium truncate">@${req.senderUsername}</span>
-                            <button onclick="resolveFriendRequest('${reqId}', 'approved', '${req.senderId}', '${req.senderUsername}')" class="p-1 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded transition-all"><i data-lucide="check" class="w-3 h-3"></i></button>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', itemHtml);
-                });
-                lucide.createIcons();
-            });
-
-            // Stream confirmed structural friendship nodes
-            onSnapshot(query(collection(db, "friends"), where("users", "array-contains", auth.currentUser.uid)), (snap) => {
-                const container = document.getElementById('friends-list-box');
-                container.innerHTML = snap.empty ? `<p class="text-[11px] text-slate-600 px-2 italic">Secure lines unassigned.</p>` : "";
-                snap.forEach(docNode => {
-                    const data = docNode.data();
-                    const targetUid = data.user1 === auth.currentUser.uid ? data.user2 : data.user1;
-                    const targetName = data.user1 === auth.currentUser.uid ? data.user2Username : data.user1Username;
-                    
-                    const itemHtml = `
-                        <div onclick="initiateDmSession('${targetUid}', '${targetName}')" class="flex items-center gap-2 p-2 hover:bg-slate-800/30 rounded-xl cursor-pointer transition-all">
-                            <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
-                            <span class="text-xs text-slate-300 font-medium truncate">@${targetName}</span>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', itemHtml);
-                });
-                lucide.createIcons();
-            });
-        }
-
-        // Send a friend request
-        async function dispatchFriendRequestAction() {
-            const handleInput = document.getElementById('input-friend-handle').value.trim().toLowerCase();
-            const feedback = document.getElementById('friend-req-feedback');
-            feedback.classList.add('hidden');
-
-            if (!handleInput || handleInput === myUserData.username) return;
-
-            const targetUserSnap = await getDoc(doc(db, "usernames", handleInput));
-            if (!targetUserSnap.exists()) {
-                feedback.textContent = "Identity target profile not found.";
-                feedback.className = "text-[10px] px-2 mt-1 text-rose-400";
-                feedback.classList.remove('hidden');
-                return;
-            }
-
-            const targetUid = targetUserSnap.data().uid;
-            const requestIdentityToken = [auth.currentUser.uid, targetUid].sort().join("_");
-
-            await setDoc(doc(db, "friendRequests", requestIdentityToken), {
-                senderId: auth.currentUser.uid,
-                senderUsername: myUserData.username,
-                receiverId: targetUid,
-                status: "pending"
-            });
-
-            feedback.textContent = "Clearance request issued.";
-            feedback.className = "text-[10px] px-2 mt-1 text-emerald-400";
-            feedback.classList.remove('hidden');
-        }
-
-        // Accept a friend request
-        window.resolveFriendRequest = async (requestId, status, senderId, senderUsername) => {
-            if (status === 'approved') {
-                const friendshipId = [auth.currentUser.uid, senderId].sort().join("_");
-                await setDoc(doc(db, "friends", friendshipId), {
-                    users: [auth.currentUser.uid, senderId],
-                    user1: auth.currentUser.uid,
-                    user1Username: myUserData.username,
-                    user2: senderId,
-                    user2Username: senderUsername
-                });
-            }
-            await setDoc(doc(db, "friendRequests", requestId), { status: "approved" }, { merge: true });
-        };
-
-        // Open a DM session
-        window.initiateDmSession = async (targetUid, targetUsername) => {
-            activeChannelId = [auth.currentUser.uid, targetUid].sort().join("_");
-            
-            // Ensure data structure exists in system
-            await setDoc(doc(db, "dms", activeChannelId), {
-                user1: auth.currentUser.uid,
-                user2: targetUid
-            }, { merge: true });
-
-            document.getElementById('main-header-title').textContent = `@${targetUsername}`;
-            document.getElementById('chat-input-bar').classList.remove('hidden');
-            
-            streamChatLogsPipeline("dmMessages", "dmId");
-        };
-
-        // Render Server Sidebar Layout Pipeline 
         async function renderServerSidebarLayoutPipeline(serverId) {
             const srvSnap = await getDoc(doc(db, "servers", serverId));
             if (!srvSnap.exists()) return;
             const srvData = srvSnap.data();
 
-            document.getElementById('sidebar-header-title').innerHTML = `
-                <span class="truncate pr-2">${srvData.name}</span>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
-            `;
-            lucide.createIcons();
+            document.getElementById('sidebar-header-title').innerHTML = `<span class="truncate pr-2">${srvData.name}</span> <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>`;
+            
+            // Server Owner validation permission engine check layer
+            const isOwner = srvData.ownerId === auth.currentUser.uid;
+            document.getElementById('btn-create-channel-modal').classList.toggle('hidden', !isOwner);
 
-            // Set layout dynamic controls triggers
             document.getElementById('btn-gen-invite').onclick = () => generateServerInviteToken(serverId);
             document.getElementById('btn-create-channel-modal').onclick = () => toggleModal('modal-create-channel', true);
             document.getElementById('btn-execute-create-channel').onclick = () => deployServerChannelNode(serverId);
 
             unsubChannels = onSnapshot(query(collection(db, "channels"), where("serverId", "==", serverId)), (snap) => {
                 const sidebar = document.getElementById('sidebar-context-content');
-                sidebar.innerHTML = `
-                    <div class="space-y-4">
-                        <div>
-                            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Text Pipeline Channels</div>
-                            <div id="srv-text-chans" class="space-y-0.5"></div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Voice Broadcast Nodes</div>
-                            <div id="srv-voice-chans" class="space-y-0.5"></div>
-                        </div>
-                    </div>
-                `;
+                sidebar.innerHTML = `<div class="space-y-4"><div><div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Text Channels</div><div id="srv-text-chans" class="space-y-0.5"></div></div><div><div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Voice Channels</div><div id="srv-voice-chans" class="space-y-0.5"></div></div></div>`;
+                const tBox = document.getElementById('srv-text-chans'), vBox = document.getElementById('srv-voice-chans');
                 
-                const txtBox = document.getElementById('srv-text-chans');
-                const vcBox = document.getElementById('srv-voice-chans');
-
-                snap.forEach(docNode => {
-                    const chan = docNode.data();
-                    const cid = docNode.id;
-
-                    if (chan.type === "text") {
-                        const html = `
-                            <div onclick="switchServerChannel('${cid}', '${chan.name}', 'text')" class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-800/30 rounded-xl cursor-pointer text-xs text-slate-300 font-medium transition-all">
-                                <i data-lucide="hash" class="w-3.5 h-3.5 text-slate-500"></i> <span class="truncate">${chan.name}</span>
-                            </div>
-                        `;
-                        txtBox.insertAdjacentHTML('beforeend', html);
+                snap.forEach(d => {
+                    const c = d.data(), cid = d.id;
+                    if (c.type === "text") {
+                        tBox.insertAdjacentHTML('beforeend', `<div onclick="switchServerChannel('${cid}', '${c.name}', 'text')" class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-800/30 rounded-xl cursor-pointer text-xs text-slate-300 font-medium truncate"><i data-lucide="hash" class="w-3.5 h-3.5 text-slate-500"></i><span>${c.name}</span></div>`);
                     } else {
-                        const html = `
-                            <div onclick="switchServerChannel('${cid}', '${chan.name}', 'voice')" class="flex items-center justify-between px-2 py-1.5 hover:bg-slate-800/30 rounded-xl cursor-pointer text-xs text-slate-300 font-medium transition-all">
-                                <div class="flex items-center gap-2 truncate">
-                                    <i data-lucide="volume-2" class="w-3.5 h-3.5 text-emerald-500"></i> <span class="truncate">${chan.name}</span>
-                                </div>
-                                <span class="text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider scale-90">Live</span>
-                            </div>
-                        `;
-                        vcBox.insertAdjacentHTML('beforeend', html);
+                        vBox.insertAdjacentHTML('beforeend', `<div onclick="switchServerChannel('${cid}', '${c.name}', 'voice')" class="flex items-center justify-between px-2 py-1.5 hover:bg-slate-800/30 rounded-xl cursor-pointer text-xs text-slate-300 font-medium truncate"><div class="flex items-center gap-2"><i data-lucide="volume-2" class="w-3.5 h-3.5 text-emerald-500"></i><span>${c.name}</span></div><span class="text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-full font-bold">Live</span></div>`);
                     }
                 });
                 lucide.createIcons();
             });
         }
 
-        // Channel creation engine
         async function deployServerChannelNode(serverId) {
             const nameInput = document.getElementById('chan-input-name').value.trim().toLowerCase().replace(/\s+/g, '-');
             const typeSelect = document.getElementById('chan-input-type').value;
-
             if (!nameInput) return;
-
-            await addDoc(collection(db, "channels"), {
-                serverId: serverId,
-                name: nameInput,
-                type: typeSelect
-            });
-
-            toggleModal('modal-create-channel', false);
-            document.getElementById('chan-input-name').value = "";
+            await addDoc(collection(db, "channels"), { serverId, name: nameInput, type: typeSelect });
+            toggleModal('modal-create-channel', false); document.getElementById('chan-input-name').value = "";
         }
 
-        // Switch channels within a server
         window.switchServerChannel = (channelId, name, type) => {
-            activeChannelId = channelId;
-            if (unsubMessages) unsubMessages();
-
-            document.getElementById('main-header-title').textContent = type === 'text' ? `#${name}` : `🔊 ${name} (Connected)`;
-            
+            activeChannelId = channelId; if (unsubMessages) unsubMessages();
+            document.getElementById('main-header-title').textContent = type === 'text' ? `#${name}` : `🔊 ${name}`;
             if (type === 'text') {
                 document.getElementById('chat-input-bar').classList.remove('hidden');
                 streamChatLogsPipeline("serverMessages", "channelId");
             } else {
                 document.getElementById('chat-input-bar').classList.add('hidden');
-                clearChatViewport(`Connected to room streaming audio pipeline cluster: ${name}. Voice streaming state active.`);
+                clearChatViewport(`Connected to voice sector: ${name}. Audio routing ready.`);
             }
         };
 
-        // Stream and display chat log pipelines
-        function streamChatLogsPipeline(collectionTitle, pivotParam) {
-            const chatQuery = query(collection(db, collectionTitle), where(pivotParam, "==", activeChannelId), orderBy("timestamp", "asc"), limit(75));
-            
-            unsubMessages = onSnapshot(chatQuery, (snap) => {
-                const viewport = document.getElementById('chat-viewport-messages');
-                viewport.innerHTML = snap.empty ? `<div class="h-full flex items-center justify-center text-slate-600 text-xs italic">Silence rules this node channel. Send a packet to transmit.</div>` : "";
-                
-                snap.forEach(docNode => {
-                    const data = docNode.data();
-                    const nodeHtml = `
-                        <div class="flex items-start gap-3 hover:bg-slate-900/20 p-1.5 rounded-xl transition-all group">
+        function streamChatLogsPipeline(coll, pivot) {
+            unsubMessages = onSnapshot(query(collection(db, coll), where(pivot, "==", activeChannelId), orderBy("timestamp", "asc"), limit(60)), (snap) => {
+                const viewport = document.getElementById('chat-viewport-messages'); viewport.innerHTML = "";
+                snap.forEach(d => {
+                    const data = d.data();
+                    viewport.insertAdjacentHTML('beforeend', `
+                        <div class="flex items-start gap-3 hover:bg-slate-900/20 p-1.5 rounded-xl group">
                             <img onclick="inspectUserProfile('${data.senderUid}')" src="${data.senderAvatar}" class="w-9 h-9 rounded-xl object-cover bg-slate-800 cursor-pointer hover:scale-105 transition-all">
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-baseline gap-1.5 mb-0.5">
                                     <span class="font-semibold text-xs text-slate-200">${data.senderName}</span>
-                                    <span class="text-[10px] text-indigo-400 font-medium">@${data.senderHandle}</span>
-                                    <span class="text-[9px] text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity ml-1">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                    <span class="text-[10px] text-indigo-400">@${data.senderHandle}</span>
                                 </div>
-                                <p class="text-xs text-slate-300 break-words leading-relaxed">${data.text}</p>
+                                <p class="text-xs text-slate-300 break-words">${data.text}</p>
                             </div>
                         </div>
-                    `;
-                    viewport.insertAdjacentHTML('beforeend', nodeHtml);
+                    `);
                 });
                 viewport.scrollTop = viewport.scrollHeight;
             });
         }
 
-        // Global unified channel submit handler routing interceptor
         document.getElementById('chat-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const field = document.getElementById('chat-message-field');
-            const msg = field.value.trim();
-            if (!msg || !activeChannelId) return;
-
-            field.value = "";
+            e.preventDefault(); const f = document.getElementById('chat-message-field'); const msg = f.value.trim();
+            if (!msg || !activeChannelId) return; f.value = "";
             const isDm = activeContext === "dm-hub";
-            const routeCollection = isDm ? "dmMessages" : "serverMessages";
-            const pivotParam = isDm ? "dmId" : "channelId";
-
-            await addDoc(collection(db, routeCollection), {
-                [pivotParam]: activeChannelId,
-                text: msg,
-                senderUid: auth.currentUser.uid,
-                senderName: myUserData.displayName,
-                senderHandle: myUserData.username,
-                senderAvatar: myUserData.avatarUrl,
-                timestamp: Date.now()
+            await addDoc(collection(db, isDm ? "dmMessages" : "serverMessages"), {
+                [isDm ? "dmId" : "channelId"]: activeChannelId, text: msg, senderUid: auth.currentUser.uid,
+                senderName: myUserData.displayName, senderHandle: myUserData.username, senderAvatar: myUserData.avatarUrl, timestamp: Date.now()
             });
         });
 
-        // 30-Day Expiring Invite Code Engine Generator
-        async function generateServerInviteToken(serverId) {
-            const randomCode = `SC-INV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-            const expirationTimelineDate = Date.now() + (30 * 24 * 60 * 60 * 1000); // exactly 30 days out
+        // FRIENDS LOGIC MODULE BOOTSTRAPPING
+        function renderDmHubSidebar() {
+            const s = document.getElementById('sidebar-context-content');
+            s.innerHTML = `<div class="space-y-4"><div><div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Add Friend</div><div class="flex gap-1 px-1"><input type="text" id="input-friend-handle" placeholder="handle" class="bg-slate-900 border border-slate-800 text-xs rounded-lg px-2 py-1.5 flex-1 outline-none text-slate-200"><button id="btn-send-friend-req" class="bg-indigo-500 p-1.5 rounded-lg text-white"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i></button></div><p id="friend-req-feedback" class="text-[10px] px-2 mt-1 hidden"></p></div><div class="w-full h-[1px] bg-slate-900"></div><div><div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Clearance Requests</div><div id="pending-requests-box" class="space-y-1"></div></div><div class="w-full h-[1px] bg-slate-900"></div><div><div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">Direct Secure Lines</div><div id="friends-list-box" class="space-y-1"></div></div></div>`;
+            lucide.createIcons();
+            document.getElementById('btn-send-friend-req').addEventListener('click', dispatchFriendReq);
 
-            await setDoc(doc(db, "invites", randomCode), {
-                serverId: serverId,
-                expiresAt: expirationTimelineDate
+            onSnapshot(query(collection(db, "friendRequests"), where("receiverId", "==", auth.currentUser.uid), where("status", "==", "pending")), (snap) => {
+                const b = document.getElementById('pending-requests-box'); b.innerHTML = snap.empty ? `<p class="text-[10px] text-slate-600 px-2 italic">None.</p>` : "";
+                snap.forEach(d => { const r = d.data(); b.insertAdjacentHTML('beforeend', `<div class="flex items-center justify-between p-1.5 bg-slate-900/40 border border-slate-800/50 rounded-xl"><span class="text-xs text-slate-300 truncate">@${r.senderUsername}</span><button onclick="acceptFriend('${d.id}', '${r.senderId}', '${r.senderUsername}')" class="p-1 bg-emerald-500/20 text-emerald-400 rounded"><i data-lucide="check" class="w-3 h-3"></i></button></div>`); });
+                lucide.createIcons();
             });
 
-            prompt("Expiring temporary link node key deployed. Valid for 30 days:", randomCode);
+            onSnapshot(query(collection(db, "friends"), where("users", "array-contains", auth.currentUser.uid)), (snap) => {
+                const b = document.getElementById('friends-list-box'); b.innerHTML = snap.empty ? `<p class="text-[10px] text-slate-600 px-2 italic">None.</p>` : "";
+                snap.forEach(d => {
+                    const r = d.data(), tUid = r.user1 === auth.currentUser.uid ? r.user2 : r.user1, tName = r.user1 === auth.currentUser.uid ? r.user2Username : r.user1Username;
+                    b.insertAdjacentHTML('beforeend', `<div onclick="initiateDmSession('${tUid}', '${tName}')" class="flex items-center gap-2 p-1.5 hover:bg-slate-800/30 rounded-xl cursor-pointer"><i data-lucide="user" class="w-3.5 h-3.5 text-slate-500"></i><span class="text-xs text-slate-300 truncate">@${tName}</span></div>`);
+                });
+                lucide.createIcons();
+            });
         }
 
-        // Server join submission processor entry validator
-        document.getElementById('btn-execute-join').addEventListener('click', async () => {
-            const code = document.getElementById('join-input-code').value.trim();
-            if (!code) return;
+        async function dispatchFriendReq() {
+            const h = document.getElementById('input-friend-handle').value.trim().toLowerCase().replace(/[@\s]/g, "");
+            const f = document.getElementById('friend-req-feedback'); f.classList.add('hidden');
+            if (!h || h === myUserData.username) return;
 
-            const inviteRef = doc(db, "invites", code);
-            const snap = await getDoc(inviteRef);
+            const snap = await getDoc(doc(db, "usernames", h));
+            if (!snap.exists()) { f.textContent = "Operator unassigned."; f.className="text-[10px] px-2 mt-1 text-rose-400"; f.classList.remove('hidden'); return; }
 
-            if (!snap.exists()) { alert("Invalid access Token key string."); return; }
-            
-            const inviteData = snap.data();
-            if (Date.now() > inviteData.expiresAt) { alert("This invite token hash node link has expired (30-day lifespan limit exceeded)."); return; }
+            const tUid = snap.data().uid; const tKey = [auth.currentUser.uid, tUid].sort().join("_");
+            await setDoc(doc(db, "friendRequests", tKey), { senderId: auth.currentUser.uid, senderUsername: myUserData.username, receiverId: tUid, status: "pending" });
+            f.textContent = "Dispatched."; f.className="text-[10px] px-2 mt-1 text-emerald-400"; f.classList.remove('hidden');
+        }
 
-            await updateDoc(doc(db, "servers", inviteData.serverId), {
-                members: arrayUnion(auth.currentUser.uid)
-            });
+        window.acceptFriend = async (rid, sId, sName) => {
+            const fKey = [auth.currentUser.uid, sId].sort().join("_");
+            await setDoc(doc(db, "friends", fKey), { users: [auth.currentUser.uid, sId], user1: auth.currentUser.uid, user1Username: myUserData.username, user2: sId, user2Username: sName });
+            await setDoc(doc(db, "friendRequests", rid), { status: "approved" }, { merge: true });
+        };
 
-            toggleModal('modal-join-server', false);
-            document.getElementById('join-input-code').value = "";
-            switchContext(`server-${inviteData.serverId}`);
-        });
+        window.initiateDmSession = async (tUid, tName) => {
+            activeChannelId = [auth.currentUser.uid, tUid].sort().join("_");
+            await setDoc(doc(db, "dms", activeChannelId), { user1: auth.currentUser.uid, user2: tUid }, { merge: true });
+            document.getElementById('main-header-title').textContent = `@${tName}`;
+            document.getElementById('chat-input-bar').classList.remove('hidden');
+            streamChatLogsPipeline("dmMessages", "dmId");
+        };
 
-        // Create Server deployment entry
-        document.getElementById('btn-execute-create-server').addEventListener('click', async () => {
-            const name = document.getElementById('srv-input-name').value.trim();
-            if (!name) return;
+        window.inspectUserProfile = async (uid) => {
+            const s = await getDoc(doc(db, "users", uid)); if (!s.exists()) return; const u = s.data();
+            document.getElementById('inspect-name').textContent = u.displayName;
+            document.getElementById('inspect-handle').textContent = `@${u.username}`;
+            document.getElementById('inspect-avatar').src = u.avatarUrl;
+            document.getElementById('inspect-banner').style.background = u.bannerUrl;
 
-            const docRef = await addDoc(collection(db, "servers"), {
-                name: name,
-                ownerId: auth.currentUser.uid,
-                members: [auth.currentUser.uid]
-            });
-
-            // Initialize general communications standard text pipeline inside new server
-            await addDoc(collection(db, "channels"), {
-                serverId: docRef.id,
-                name: "general",
-                type: "text"
-            });
-
-            toggleModal('modal-create-server', false);
-            document.getElementById('srv-input-name').value = "";
-            switchContext(`server-${docRef.id}`);
-        });
-
-        // Inspector panel profile viewing engine window card modal layout trigger setup hook
-        window.inspectUserProfile = async (userUid) => {
-            const profileSnap = await getDoc(doc(db, "users", userUid));
-            if (!profileSnap.exists()) return;
-            const uData = profileSnap.data();
-
-            document.getElementById('inspect-name').textContent = uData.displayName;
-            document.getElementById('inspect-handle').textContent = `@${uData.username}`;
-            document.getElementById('inspect-uid').textContent = uData.userId;
-            document.getElementById('inspect-avatar').src = uData.avatarUrl;
-            document.getElementById('inspect-banner').style.background = uData.bannerUrl;
-
-            const actionsBox = document.getElementById('inspect-action-container');
-            actionsBox.innerHTML = "";
-
-            if (userUid !== auth.currentUser.uid) {
-                const checkId = [auth.currentUser.uid, userUid].sort().join("_");
-                const friendSnap = await getDoc(doc(db, "friends", checkId));
-
-                if (friendSnap.exists()) {
-                    actionsBox.innerHTML = `
-                        <button onclick="closeInspectModal(); initiateDmSession('${userUid}', '${uData.username}')" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1">
-                            <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Open Secure DM Line
-                        </button>
-                    `;
+            const container = document.getElementById('inspect-action-container'); container.innerHTML = "";
+            if (uid !== auth.currentUser.uid) {
+                const fKey = [auth.currentUser.uid, uid].sort().join("_"); const fSnap = await getDoc(doc(db, "friends", fKey));
+                if (fSnap.exists()) {
+                    container.innerHTML = `<button onclick="toggleModal('modal-user-card', false); initiateDmSession('${uid}', '${u.username}')" class="w-full bg-indigo-500 py-1.5 rounded-xl text-xs font-medium">Message Secure Line</button>`;
                 } else {
-                    actionsBox.innerHTML = `
-                        <button onclick="dispatchDirectFriendRequest('${uData.username}')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1">
-                            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Issue Clearance Request
-                        </button>
-                    `;
+                    container.innerHTML = `<button onclick="toggleModal('modal-user-card', false); switchContext('dm-hub');" class="w-full bg-slate-800 py-1.5 rounded-xl text-xs text-slate-300">Request via DM Hub</button>`;
                 }
-            } else {
-                actionsBox.innerHTML = `<p class="text-center text-[11px] text-slate-500 italic">This is your identity profile node.</p>`;
-            }
-
-            toggleModal('modal-user-card', true);
-            lucide.createIcons();
+            } else { container.innerHTML = `<p class="text-center text-[10px] text-slate-500 italic">Self core cluster record.</p>`; }
+            toggleModal('modal-user-card', true); lucide.createIcons();
         };
 
-        window.dispatchDirectFriendRequest = async (username) => {
-            closeInspectModal();
-            switchContext("dm-hub");
-            document.getElementById('input-friend-handle').value = username;
-            await dispatchFriendRequestAction();
-        };
+        // INVITES & UTILITIES
+        async function generateServerInviteToken(serverId) {
+            const code = `SC-INV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+            await setDoc(doc(db, "invites", code), { serverId, expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000) });
+            prompt("Temporary invite key string deployed (Valid for 30 days):", code);
+        }
 
-        window.closeInspectModal = () => toggleModal('modal-user-card', false);
-        function clearChatViewport(text) {
-            document.getElementById('chat-viewport-messages').innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
-                    <i data-lucide="activity" class="w-12 h-12 text-slate-800"></i>
-                    <p class="text-xs max-w-xs">${text}</p>
-                </div>
-            `;
+        document.getElementById('btn-execute-join').addEventListener('click', async () => {
+            const code = document.getElementById('join-input-code').value.trim(); if (!code) return;
+            const s = await getDoc(doc(db, "invites", code));
+            if (!s.exists() || Date.now() > s.data().expiresAt) { alert("Invalid or expired invite."); return; }
+            await updateDoc(doc(db, "servers", s.data().serverId), { members: arrayUnion(auth.currentUser.uid) });
+            toggleModal('modal-join-server', false); document.getElementById('join-input-code').value = "";
+            switchContext(`server-${s.data().serverId}`);
+        });
+
+        document.getElementById('btn-execute-create-server').addEventListener('click', async () => {
+            const n = document.getElementById('srv-input-name').value.trim(); if (!n) return;
+            const ref = await addDoc(collection(db, "servers"), { name: n, ownerId: auth.currentUser.uid, members: [auth.currentUser.uid] });
+            await addDoc(collection(db, "channels"), { serverId: ref.id, name: "general", type: "text" });
+            toggleModal('modal-create-server', false); document.getElementById('srv-input-name').value = "";
+            switchContext(`server-${ref.id}`);
+        });
+
+        function clearChatViewport(t) {
+            document.getElementById('chat-viewport-messages').innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500"><i data-lucide="activity" class="w-10 h-10 mb-2 text-slate-800"></i><p class="text-xs max-w-xs">${t}</p></div>`;
             lucide.createIcons();
         }
 
-        // Global triggers wiring setup layout configurations UI
         document.getElementById('btn-create-server-trigger').onclick = () => toggleModal('modal-create-server', true);
         document.getElementById('btn-join-server-trigger').onclick = () => toggleModal('modal-join-server', true);
         document.getElementById('nav-dm-hub').onclick = () => switchContext('dm-hub');
-        document.getElementById('btn-my-settings').onclick = () => inspectUserProfile(auth.currentUser.uid);
     </script>
 </body>
 </html>
