@@ -3,211 +3,444 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speechcentor - Mutual Requests, Friends & Blocking Suite</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+    <title>SpeechCentor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .discord-dark { background-color: #313338; color: #f2f3f5; }
-        .discord-servers { background-color: #1e1f22; }
-        .discord-channels { background-color: #2b2d31; }
-        .discord-chat { background-color: #313338; }
-        .discord-user-bar { background-color: #232428; }
-        .members-wrap { background-color: #2b2d31; width: 240px; }
-        #cropper-container { max-height: 300px; }
-        .cropper-view-box, .cropper-face { border-radius: 50%; } 
-        .cropper-banner .cropper-view-box, .cropper-banner .cropper-face { border-radius: 0; } 
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+        }
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
+        }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden font-sans flex discord-dark">
+<body class="text-slate-100 h-screen w-screen overflow-hidden flex flex-col antialiased">
 
-    <div id="auth-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-[#313338]">
-        <div class="bg-[#313338] p-8 rounded-lg shadow-2xl w-[480px] border border-[#232428]">
-            <div class="text-center mb-6">
-                <h2 id="auth-title" class="text-2xl font-bold text-white mb-2">Welcome back to Speechcentor!</h2>
-                <p class="text-gray-400 text-sm">We're so excited to see you again!</p>
+    <div id="setup-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-[#090d16] p-4 hidden">
+        <div class="glass max-w-md w-full rounded-2xl p-8 shadow-2xl border border-indigo-500/20 text-center">
+            <div class="w-16 h-16 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/20">
+                <i data-lucide="message-square" class="w-8 h-8 text-white"></i>
             </div>
-
-            <div id="auth-error" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded"></div>
-
-            <form id="auth-form" onsubmit="window.handleAuth(event)">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-300 uppercase mb-2 tracking-wider">Email</label>
-                        <input type="email" id="auth-email" required class="w-full bg-[#1e1f22] border border-[#111214] rounded p-2 text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-300 uppercase mb-2 tracking-wider">Password</label>
-                        <input type="password" id="auth-password" required class="w-full bg-[#1e1f22] border border-[#111214] rounded p-2 text-white focus:outline-none focus:border-indigo-500">
-                    </div>
+            <h2 class="text-2xl font-bold mb-2 tracking-tight">Welcome to SpeechCentor</h2>
+            <p class="text-sm text-slate-400 mb-6">Create your universal unique profile to enter the hub.</p>
+            
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Display Name</label>
+                    <input type="text" id="setup-displayname" placeholder="e.g. Alex" class="w-full bg-slate-900/60 border border-slate-700/50 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all">
                 </div>
-                <button type="submit" id="auth-submit-btn" class="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-medium py-3 rounded mt-6 transition duration-150">Log In</button>
-            </form>
-
-            <div class="mt-4 text-sm text-gray-400 text-center">
-                <span id="auth-switch-text">Need an account?</span> 
-                <button onclick="window.toggleAuthMode()" class="text-[#00aff4] hover:underline font-medium" id="auth-switch-btn">Register</button>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Unique @Username</label>
+                    <input type="text" id="setup-username" placeholder="e.g. alex_dev (Letters, numbers, underscores)" class="w-full bg-slate-900/60 border border-slate-700/50 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all">
+                    <p id="setup-error" class="text-rose-400 text-xs mt-2 hidden"></p>
+                </div>
+                <button id="btn-create-profile" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium py-3 rounded-xl shadow-lg shadow-indigo-500/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                    Initialize Profile <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="app-dashboard" class="hidden h-full w-full flex">
+    <div id="app-container" class="flex flex-1 h-full w-full overflow-hidden opacity-30 pointer-events-none transition-opacity duration-300">
         
-        <div class="discord-servers w-[72px] flex flex-col items-center py-3 space-y-2 shrink-0 overflow-y-auto">
-            <div onclick="window.selectServer('home')" class="w-12 h-12 rounded-3xl bg-[#313338] hover:rounded-2xl hover:bg-[#5865F2] flex items-center justify-center cursor-pointer transition-all duration-200 text-white font-bold border-2 border-transparent hover:border-[#5865F2]" title="Direct Messages / Home">
-                SC
-            </div>
-            <div class="w-8 h-[2px] bg-[#35363c] rounded"></div>
-            
-            <div id="servers-list-container" class="flex flex-col space-y-2 w-full items-center"></div>
-
-            <div onclick="window.openCreateServerModal()" class="w-12 h-12 rounded-3xl bg-[#2b2d31] hover:rounded-2xl hover:bg-[#23a55a] flex items-center justify-center cursor-pointer transition-all duration-200 text-gray-300 hover:text-white font-bold text-xl" title="Add a Server">+</div>
-        </div>
-
-        <div class="discord-channels w-60 flex flex-col shrink-0 border-r border-[#1f2023]">
-            <div class="h-12 border-b border-[#1f2023] flex items-center justify-between px-4 font-bold text-white shadow-sm">
-                <span id="active-server-name">Direct Messages</span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto px-2 py-4 space-y-4">
-                <div id="channels-wrapper">
-                    <div class="text-xs font-bold text-gray-400 px-2 uppercase tracking-wider mb-1 flex items-center justify-between">
-                        <span>Direct Channels</span>
-                    </div>
-                    <div id="channels-list" class="space-y-0.5">
-                        <div class="flex items-center space-x-2 px-2 py-1.5 rounded bg-[#35373c] text-white cursor-pointer">
-                            <span class="text-gray-400 text-lg">@</span>
-                            <span class="font-medium text-sm">friends</span>
-                        </div>
+        <aside class="w-72 bg-[#0d121f] border-r border-slate-800/60 flex flex-col justify-between select-none">
+            <div>
+                <div class="h-16 border-b border-slate-800/60 flex items-center justify-between px-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-3 h-3 rounded-full bg-indigo-500 animate-pulse"></span>
+                        <h1 class="font-bold text-lg tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-slate-100 to-slate-300">SpeechCentor</h1>
                     </div>
                 </div>
-                
-                <div id="server-settings-block" class="hidden border-t border-gray-700 pt-4 space-y-2">
-                    <button onclick="window.openRolesModal()" class="w-full bg-gray-700 hover:bg-gray-600 text-white text-xs py-2 rounded transition font-bold uppercase tracking-wider">
-                        ⚙️ Roles & Settings
-                    </button>
-                    <button onclick="window.leaveServer()" class="w-full bg-red-900/50 hover:bg-red-800/60 text-red-200 text-xs py-2 rounded transition font-bold uppercase tracking-wider">
-                        ⚠️ Leave Server
-                    </button>
+
+                <div class="p-3 space-y-1">
+                    <div class="text-xs font-bold text-slate-500 px-2 py-2 uppercase tracking-widest">Global Areas</div>
+                    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500/10 to-transparent border-l-2 border-indigo-500 text-slate-100 font-medium cursor-pointer">
+                        <i data-lucide="hash" class="w-4 h-4 text-indigo-400"></i>
+                        <span>global-chat</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="discord-user-bar h-14 flex items-center justify-between px-2 shrink-0">
-                <div class="flex items-center space-x-2 cursor-pointer hover:bg-[#35373c] p-1.5 rounded w-[70%]" onclick="window.openProfileModal()">
-                    <img id="nav-user-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=Fallback" class="w-8 h-8 rounded-full bg-[#5865F2] object-cover shrink-0" alt="PFP">
-                    <div class="flex flex-col overflow-hidden leading-tight">
-                        <span class="text-white text-sm font-semibold truncate w-24" id="nav-user-displayname">Display Name</span>
-                        <span class="text-xs text-[#b5bac1]" id="nav-user-handle">@username</span>
+            <div class="p-3 bg-[#0a0e19] border-t border-slate-800/60 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0 cursor-pointer hover:bg-slate-800/30 p-1.5 rounded-xl transition-all flex-1" id="btn-open-settings">
+                    <div class="relative flex-shrink-0">
+                        <img id="my-avatar" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150" class="w-10 h-10 rounded-xl object-cover ring-2 ring-indigo-500/20">
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-[#0a0e19]"></span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div id="my-displayname" class="font-semibold text-sm truncate text-slate-200">Loading...</div>
+                        <div id="my-handle" class="text-xs text-slate-400 truncate">@username</div>
                     </div>
                 </div>
-                <button onclick="window.logoutUser()" class="text-gray-400 hover:text-red-400 p-1.5 hover:bg-[#35373c] rounded transition" title="Log Out">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                <button id="btn-settings-icon" class="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-xl transition-all">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
                 </button>
             </div>
-        </div>
+        </aside>
 
-        <div class="discord-chat flex-1 flex flex-col justify-between relative overflow-hidden">
-            <div class="h-12 border-b border-[#1f2023] flex items-center px-4 shadow-sm space-x-2 shrink-0">
-                <span class="text-gray-400 text-lg" id="active-channel-prefix">@</span>
-                <span id="active-channel-name" class="font-bold text-white text-base tracking-wide">friends</span>
-                <span class="text-gray-400 text-sm border-l border-gray-700 pl-3 ml-2" id="active-channel-desc">Manage friends list, system logs, direct channels.</span>
+        <main class="flex-1 flex flex-col bg-[#0f1626] relative">
+            <header class="h-16 border-b border-slate-800/60 px-6 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="hash" class="w-5 h-5 text-slate-400"></i>
+                    <span class="font-semibold text-slate-200">global-chat</span>
+                    <span class="mx-2 text-slate-600">|</span>
+                    <span class="text-xs text-slate-400 hidden sm:inline">Welcome to the epicenter of conversation.</span>
+                </div>
+            </header>
+
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                </div>
+
+            <div class="p-4 bg-gradient-to-t from-[#0f1626] via-[#0f1626] to-transparent">
+                <form id="chat-form" class="glass rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg focus-within:border-indigo-500/50 transition-all">
+                    <input type="text" id="chat-input" autocomplete="off" placeholder="Message #global-chat" class="bg-transparent flex-1 text-slate-200 placeholder-slate-500 focus:outline-none text-sm">
+                    <button type="submit" class="p-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg shadow-md shadow-indigo-500/10 transition-all">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass max-w-lg w-full rounded-2xl overflow-hidden shadow-2xl border border-slate-700/40 transform scale-95 transition-all duration-300" id="settings-card">
+            
+            <div class="relative h-36 bg-gradient-to-r from-indigo-600 to-purple-600" id="profile-banner-preview">
+                <label class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex items-center justify-center transition-all cursor-pointer text-sm font-medium gap-2">
+                    <i data-lucide="camera" class="w-4 h-4"></i> Change Banner
+                    <input type="file" id="input-banner" accept="image/*" class="hidden">
+                </label>
+                <button id="btn-close-settings" class="absolute top-3 right-3 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-all">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
             </div>
 
-            <div id="home-dashboard-panel" class="flex-1 flex flex-col p-6 overflow-y-auto">
-                <div class="flex border-b border-gray-700 space-x-6 mb-6">
-                    <span class="text-white font-bold pb-2 border-b-2 border-[#5865F2] cursor-pointer" onclick="window.switchMainTab('friends-list')">Friends List</span>
-                    <span class="text-gray-400 font-semibold cursor-pointer hover:text-white" onclick="window.switchMainTab('add-friend')">Add Friend</span>
-                    <span class="text-gray-400 font-semibold cursor-pointer hover:text-white" onclick="window.switchMainTab('friend-requests')">Pending Requests <span id="requests-badge-count" class="bg-indigo-600 px-1.5 py-0.5 rounded-full text-xs text-white hidden">0</span></span>
-                    <span class="text-gray-400 font-semibold cursor-pointer hover:text-white" onclick="window.switchMainTab('blocked-list')">Blocked Users</span>
+            <div class="px-6 pb-6 relative pt-14">
+                <div class="absolute -top-12 left-6 relative w-24 h-24 rounded-2xl overflow-hidden ring-4 ring-[#0f1626] bg-slate-800 group">
+                    <img id="profile-avatar-preview" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150" class="w-full h-full object-cover">
+                    <label class="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 flex items-center justify-center transition-all cursor-pointer text-white">
+                        <i data-lucide="camera" class="w-5 h-5"></i>
+                        <input type="file" id="input-avatar" accept="image/*" class="hidden">
+                    </label>
                 </div>
 
-                <div id="tab-friends-list" class="space-y-4">
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Friends — <span id="online-count">0</span></div>
-                    <div id="friends-container" class="space-y-1"></div>
-                </div>
-
-                <div id="tab-add-friend" class="hidden space-y-4 max-w-lg">
-                    <h3 class="text-white font-bold text-lg">Add Friend</h3>
-                    <p class="text-gray-400 text-sm">Add a friend using their unique @ handle (e.g., @myusername).</p>
-                    <div class="bg-[#1e1f22] p-3 rounded-lg flex items-center space-x-3 border border-[#111214]">
-                        <input type="text" id="add-friend-uid-input" placeholder="Handle (e.g., @username)" class="flex-1 bg-transparent text-white text-sm focus:outline-none">
-                        <button onclick="window.submitAddFriend()" class="bg-[#5865F2] hover:bg-[#4752C4] text-white px-4 py-1.5 rounded text-sm font-medium transition">Send Request</button>
+                <div class="mt-4 space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Display Name</label>
+                            <input type="text" id="edit-displayname" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">User Unique Identifier</label>
+                            <input type="text" id="edit-uid" readonly class="w-full bg-slate-900/40 border border-slate-800/80 rounded-xl px-3.5 py-2 text-sm text-slate-500 cursor-not-allowed outline-none">
+                        </div>
                     </div>
-                    <div id="add-friend-feedback" class="text-xs font-medium"></div>
-                </div>
 
-                <div id="tab-friend-requests" class="hidden space-y-4">
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Incoming Requests</div>
-                    <div id="incoming-requests-container" class="space-y-2 max-w-lg"></div>
-                    
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-6">Outgoing Sent Requests</div>
-                    <div id="outgoing-requests-container" class="space-y-2 max-w-lg"></div>
-                </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Your System Handle</label>
+                        <input type="text" id="edit-username" readonly class="w-full bg-slate-900/40 border border-slate-800/80 rounded-xl px-3.5 py-2 text-sm text-slate-500 cursor-not-allowed outline-none">
+                        <p class="text-[11px] text-slate-500 mt-1">System usernames cannot be altered after system reservation.</p>
+                    </div>
 
-                <div id="tab-blocked-list" class="hidden space-y-4">
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Blocked Users List</div>
-                    <div id="blocked-container" class="space-y-1 max-w-lg"></div>
+                    <div class="pt-2 flex justify-end gap-3 border-t border-slate-800">
+                        <button id="btn-save-profile" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-500/10 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                            Save Changes
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            <div id="server-chat-panel" class="flex-1 flex flex-col hidden justify-between">
-                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
-                <div class="p-4 pt-0 shrink-0">
-                    <form id="message-form" onsubmit="window.sendMessage(event)" class="bg-[#383a40] rounded-lg p-2.5 flex items-center space-x-3">
-                        <button type="button" class="text-gray-400 hover:text-white bg-[#4e5058] hover:bg-[#6d6f78] p-1 rounded-full"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
-                        <input type="text" id="message-input" placeholder="Message #general" class="flex-1 bg-transparent text-white focus:outline-none placeholder-gray-500 text-sm">
-                        <button type="submit" class="hidden">Send</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div id="server-members-sidebar" class="members-wrap h-full flex-col shrink-0 px-4 py-6 space-y-4 overflow-y-auto hidden border-l border-[#1f2023]">
-            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Online Members</div>
-            <div id="online-members-list" class="space-y-1"></div>
-            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider pt-2 border-t border-gray-700/60">Offline Members</div>
-            <div id="offline-members-list" class="space-y-1"></div>
         </div>
     </div>
 
     <script type="module">
-        // Expose functions to window for onclick / onsubmit attributes to locate them inside the module scope
-        function getUniqueHandle(preferredHandle) {
-            // Placeholder logic stub for sample
-            return preferredHandle;
-        }
-        window.getUniqueHandle = getUniqueHandle;
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-        async function submitAssignRole() {
-            const targetUid = document.getElementById('v-profile-uid').innerText;
-            const assignedRole = document.getElementById('v-assign-role-select').value;
+        // Requested Firebase App Parameters Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMAiYmLy2k5feaWbUHE7n5TUNlZGAr6nk",
+            authDomain: "speechcentor.firebaseapp.com",
+            projectId: "speechcentor",
+            storageBucket: "speechcentor.firebasestorage.app",
+            messagingSenderId: "804696408540",
+            appId: "1:804696408540:web:855cae2217b55dca0a4f19",
+            measurementId: "G-HQ93JH0QCJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Client State Controller Variables
+        let currentUser = null;
+        const localSessionKey = "SPEECHCENTOR_UID";
+
+        // Global Helper: Creates uniquely valid identifiers natively (e.g., SC-4921-8293)
+        function generateUniqueId() {
+            const block = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1).toUpperCase();
+            return `SC-${block()}-${block()}`;
+        }
+
+        // Processing utility converting image payloads to compressed, lightweight web URLs
+        function processImageToUrl(file, maxWidth, maxHeight) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height *= maxWidth / width;
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width *= maxHeight / height;
+                                height = maxHeight;
+                            }
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7)); 
+                    };
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // App Initializer Setup check
+        window.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+            const storedUid = localStorage.getItem(localSessionKey);
+
+            if (storedUid) {
+                const userDoc = await getDoc(doc(db, "users", storedUid));
+                if (userDoc.exists()) {
+                    currentUser = userDoc.data();
+                    bootstrapDashboard();
+                } else {
+                    showSetupScreen();
+                }
+            } else {
+                showSetupScreen();
+            }
+        });
+
+        function showSetupScreen() {
+            document.getElementById('setup-screen').classList.remove('hidden');
+        }
+
+        // Handles Registration and Unique Username Locking Matrix Flow
+        document.getElementById('btn-create-profile').addEventListener('click', async () => {
+            const displayName = document.getElementById('setup-displayname').value.trim();
+            const usernameInput = document.getElementById('setup-username').value.trim().toLowerCase();
+            const errorEl = document.getElementById('setup-error');
+
+            errorEl.classList.add('hidden');
+
+            if (!displayName || !usernameInput) {
+                errorEl.textContent = "Please fill in all layout fields.";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const usernameRegex = /^[a-zA-Z0-9_.]+$/;
+            if (!usernameRegex.test(usernameInput)) {
+                errorEl.textContent = "Handle format invalid (Alphanumeric/Underscores only).";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // Check uniqueness constraints via the reserved lookup collection
+                const reservedUserRef = doc(db, "usernames", usernameInput);
+                const reservedSnap = await getDoc(reservedUserRef);
+
+                if (reservedSnap.exists()) {
+                    errorEl.textContent = "This handle is already registered by another operator.";
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+
+                // Provision unique system properties
+                const newUid = generateUniqueId();
+                const defaultAvatar = `https://api.dicebear.com/7.x/identicon/svg?seed=${usernameInput}`;
+                const defaultBanner = "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)";
+
+                const profileData = {
+                    userId: newUid,
+                    username: usernameInput,
+                    displayName: displayName,
+                    avatarUrl: defaultAvatar,
+                    bannerUrl: defaultBanner
+                };
+
+                // Double Atomic Registration Lock
+                await setDoc(doc(db, "usernames", usernameInput), { uid: newUid });
+                await setDoc(doc(db, "users", newUid), profileData);
+
+                localStorage.setItem(localSessionKey, newUid);
+                currentUser = profileData;
+
+                document.getElementById('setup-screen').classList.add('hidden');
+                bootstrapDashboard();
+
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = "System validation structural error occurred.";
+                errorEl.classList.remove('hidden');
+            }
+        });
+
+        // Interface Bootstrap Data Pipeline Hydration
+        function bootstrapDashboard() {
+            const appContainer = document.getElementById('app-container');
+            appContainer.classList.remove('opacity-30', 'pointer-events-none');
+
+            // Set UI details
+            updateLocalProfileUI();
             
-            const sRef = window.doc(window.db, "servers", currentServerId);
-            const sSnap = await window.getDoc(sRef);
-            if(!sSnap.exists()) return;
-
-            const q = query(window.collection(window.db, "users"), where("userId", "==", targetUid));
-            const snap = await window.getDocs(q);
-            let targetSystemUid = "";
-            snap.forEach(d => targetSystemUid = d.id);
-
-            const sData = sSnap.data();
-            const assignments = sData.roleAssignments || {};
-            assignments[targetSystemUid] = assignedRole;
-
-            await window.updateDoc(sRef, { roleAssignments: assignments });
-            alert(`Delegated Role '${assignedRole}' correctly!`);
-            closeVisitingProfileModal();
-            renderServerMembersPanel(currentServerId);
+            // Listen to messages
+            const chatQuery = query(collection(db, "messages"), orderBy("timestamp", "asc"));
+            onSnapshot(chatQuery, (snapshot) => {
+                const chatLog = document.getElementById('chat-messages');
+                chatLog.innerHTML = "";
+                
+                snapshot.forEach((msgDoc) => {
+                    const data = msgDoc.data();
+                    appendMessageNode(data);
+                });
+                chatLog.scrollTop = chatLog.scrollHeight;
+            });
         }
-        window.submitAssignRole = submitAssignRole;
 
-        function switchMainTab(tabId) {
-            // Stub implementation
-            console.log('Switching main tab to:', tabId);
+        function updateLocalProfileUI() {
+            document.getElementById('my-displayname').textContent = currentUser.displayName;
+            document.getElementById('my-handle').textContent = `@${currentUser.username}`;
+            document.getElementById('my-avatar').src = currentUser.avatarUrl;
+
+            // Load values inside modal settings card
+            document.getElementById('edit-displayname').value = currentUser.displayName;
+            document.getElementById('edit-uid').value = currentUser.userId;
+            document.getElementById('edit-username').value = `@${currentUser.username}`;
+            document.getElementById('profile-avatar-preview').src = currentUser.avatarUrl;
+            
+            const bannerPreview = document.getElementById('profile-banner-preview');
+            if (currentUser.bannerUrl.startsWith("data:") || currentUser.bannerUrl.startsWith("http")) {
+                bannerPreview.style.background = `url('${currentUser.bannerUrl}') center/cover no-repeat`;
+            } else {
+                bannerPreview.style.background = currentUser.bannerUrl;
+            }
         }
-        window.switchMainTab = switchMainTab;
+
+        // Real-time Chat Messaging Logic
+        document.getElementById('chat-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const messageText = input.value.trim();
+
+            if (!messageText) return;
+
+            input.value = "";
+
+            await addDoc(collection(db, "messages"), {
+                text: messageText,
+                senderId: currentUser.userId,
+                senderName: currentUser.displayName,
+                senderUsername: currentUser.username,
+                senderAvatar: currentUser.avatarUrl,
+                timestamp: Date.now()
+            });
+        });
+
+        function appendMessageNode(data) {
+            const container = document.getElementById('chat-messages');
+            const msgHtml = `
+                <div class="flex items-start gap-4 hover:bg-slate-800/20 p-2 rounded-xl transition-all group">
+                    <img src="${data.senderAvatar}" class="w-10 h-10 rounded-xl object-cover bg-slate-800 flex-shrink-0 mt-0.5">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-baseline gap-2 mb-0.5">
+                            <span class="font-semibold text-sm text-slate-200">${data.senderName}</span>
+                            <span class="text-xs text-indigo-400 font-medium">@${data.senderUsername}</span>
+                            <span class="text-[10px] text-slate-500 font-normal opacity-0 group-hover:opacity-100 transition-opacity">${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <p class="text-sm text-slate-300 break-words leading-relaxed">${escapeHtml(data.text)}</p>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', msgHtml);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Profile Settings & Custom Asset Compression Layer Engine
+        const settingsModal = document.getElementById('settings-modal');
+        
+        const openSettings = () => { settingsModal.classList.remove('hidden'); updateLocalProfileUI(); };
+        const closeSettings = () => { settingsModal.classList.add('hidden'); };
+
+        document.getElementById('btn-open-settings').addEventListener('click', openSettings);
+        document.getElementById('btn-settings-icon').addEventListener('click', openSettings);
+        document.getElementById('btn-close-settings').addEventListener('click', closeSettings);
+
+        // Realtime Avatar Upload Handling Conversion
+        document.getElementById('input-avatar').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const dataUrl = await processImageToUrl(file, 250, 250);
+                document.getElementById('profile-avatar-preview').src = dataUrl;
+                currentUser.avatarUrl = dataUrl; 
+            }
+        });
+
+        // Realtime Banner Upload Handling Conversion
+        document.getElementById('input-banner').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const dataUrl = await processImageToUrl(file, 800, 300);
+                document.getElementById('profile-banner-preview').style.background = `url('${dataUrl}') center/cover no-repeat`;
+                currentUser.bannerUrl = dataUrl;
+            }
+        });
+
+        // Synchronize and Save Updated Profile
+        document.getElementById('btn-save-profile').addEventListener('click', async () => {
+            const displayTitle = document.getElementById('edit-displayname').value.trim();
+            if (!displayTitle) return;
+
+            currentUser.displayName = displayTitle;
+
+            await setDoc(doc(db, "users", currentUser.userId), currentUser);
+            updateLocalProfileUI();
+            closeSettings();
+        });
     </script>
 </body>
 </html>
